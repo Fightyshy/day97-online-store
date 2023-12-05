@@ -9,7 +9,7 @@ import datetime as dt
 
 db = SQLAlchemy()
 
-# Customers
+# Customers and details handling
 
 
 class User(UserMixin, db.Model):
@@ -52,7 +52,8 @@ class CustomerDetails(db.Model):
     addresses: Mapped[List["Address"]] = relationship(back_populates="customer")
     # orders
     orders: Mapped[List["Order"]] = relationship(back_populates="customer")
-
+    # comments and ratings on products
+    comments: Mapped[List["Comment"]] = relationship(back_populates="customer")
 
 class Address(db.Model):
     """Customer address, child of customer details"""
@@ -72,8 +73,23 @@ class Address(db.Model):
         back_populates="addresses", single_parent=True
     )
 
+class Comment(db.Model):
+    """Customer comment made on product, customer details and product parent"""
+
+    __tablename__ = "comments"
+    
+    id: Mapped[int] = mapped_column(Integer, primary_key=True)
+    text: Mapped[str] = mapped_column(String(length=500), nullable=False)
+    rating: Mapped[int] = mapped_column(Integer, nullable=False, default=0)  # Either do total calc in flask or save to db.
+
+    customer_id: Mapped[int] = mapped_column(ForeignKey("customers.id"))
+    customer: Mapped["CustomerDetails"] = relationship(back_populates="comments")
+    product_id: Mapped[int] = mapped_column(ForeignKey("products.id"))
+    product: Mapped["Product"] = relationship(back_populates="comments")
 
 # Point of sale models
+
+
 class ShoppingCart(db.Model):
     """Customer's shopping cart, child of customer's details, but is parent of one shopping cart
     Shopping cart of a user is formed from a select query on customer_id, and retrieves it.
@@ -128,6 +144,9 @@ class Product(db.Model):
     image: Mapped[str] = mapped_column(String, nullable=False)
     category: Mapped[str] = mapped_column(String, nullable=False)
     stock: Mapped[int] = mapped_column(Integer, nullable=False, default=0)
+
+    # comments on product
+    comments: Mapped["Comment"] = relationship(back_populates="comments")
 
     cart_id: Mapped[int] = mapped_column(ForeignKey("shoppingcarts.id"))
     cart: Mapped["ShoppingCart"] = relationship(
