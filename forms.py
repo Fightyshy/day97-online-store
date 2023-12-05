@@ -7,6 +7,7 @@ from wtforms import (
     SelectField,
     BooleanField,
     FloatField,
+    SubmitField,
 )
 from wtforms.validators import DataRequired, Email, Length, Regexp, NumberRange
 
@@ -29,6 +30,8 @@ class AddressForm(FlaskForm):
     phone_code = SelectField("Country code", choices=[], validators=[DataRequired()])
     phone_number = StringField("Phone number", validators=[Regexp("[0-9]{7,15}")])
 
+    submit = SubmitField("Save address")
+
 
 # Inherit fields from addressform, use fields if not same as billing
 class ShippingAddress(AddressForm):
@@ -41,6 +44,8 @@ class ShippingAddress(AddressForm):
         default=False,
     )
 
+    submit = SubmitField("Save shipping address")
+
 
 class CustomerDetailsForm(FlaskForm):
     """Customer details form, both add on registration and edit"""
@@ -52,6 +57,7 @@ class CustomerDetailsForm(FlaskForm):
     phone_number = StringField(
         "Phone number", validators=[DataRequired(), Regexp("[0-9]{7,15}")]
     )
+    submit = SubmitField("Save details")
 
 
 class UserForm(FlaskForm):
@@ -59,6 +65,7 @@ class UserForm(FlaskForm):
 
     email = StringField("Email", validators=[DataRequired(), Email()])
     password = StringField("Password", validators=[DataRequired()])
+    submit = SubmitField("Login")
 
 
 class UserRegistrationForm(UserForm):
@@ -67,7 +74,7 @@ class UserRegistrationForm(UserForm):
     # No need for def self and super according to docs
     repeat_password = StringField("Repeat password", validators=[DataRequired()])
     username = StringField("Username", validators=[DataRequired()])
-
+    submit = SubmitField("Register")
 
 # Online store forms
 
@@ -87,3 +94,23 @@ class ProductForm(FlaskForm):
         "Image", validators=[DataRequired()]
     )  # Upload from user's pc to server, save in same root as loc under /images
     category = SelectField("Category", choices=[], validators=[DataRequired()])
+    submit = SubmitField("Add product")
+
+
+class CommentForm(FlaskForm):
+    """Add customer's comment and rating of a product form"""
+
+    text = StringField(
+        "Comment",
+        validators=[
+            DataRequired(),
+            Length(1, 500, message="Please keep your comment within 500 characters"),
+        ],
+    )
+    rating = SelectField(
+        "Rating",
+        choices=["★", "★★", "★★★", "★★★★", "★★★★★"],
+        default=["★"],
+        validators=[DataRequired()],
+    )
+    submit = SubmitField("Add comment")
