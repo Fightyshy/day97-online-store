@@ -157,7 +157,7 @@ class Product(db.Model):
     stock: Mapped[int] = mapped_column(Integer, nullable=False, default=0)
 
     # comments on product
-    comments: Mapped["Comment"] = relationship(back_populates="comments")
+    comments: Mapped[List["Comment"]] = relationship(back_populates="product")
 
     # cart_id: Mapped[int] = mapped_column(ForeignKey("shoppingcarts.id"))
     # cart: Mapped["ShoppingCart"] = relationship(
