@@ -1,5 +1,7 @@
-from models import *
-from flask import *
+from flask_login import current_user
+from models import db, Product, Comment
+from flask import Flask, render_template
+from forms import CommentForm
 
 app = Flask(__name__)
 app.config["SQLALCHEMY_DATABASE_URI"] = "sqlite:///store.db"
@@ -27,7 +29,6 @@ def edit_user_details(user_id):
     # TODO validate and submit changes to server
     return user_id
 
-
 @app.route("/user/<int:user_id>/add-address")
 def add_address(user_id):
     # TODO form validate and commit to db under address
@@ -38,6 +39,23 @@ def edit_address(user_id, address_id):
     # TODO get address from address id, check if user id matches logged in user
     # TODO update with data from form
     return "Populated form for address"
+
+# GET only
+@app.route("/products/<int:product_id>")
+def show_product(product_id):
+    shown_product = db.get_or_404(Product, product_id)
+    comment = CommentForm()
+    if comment.validate_on_submit():
+        rating_val = len(comment.rating.data)
+        new_comment = Comment(
+            text=comment.text.data,
+            rating=rating_val,
+            product=show_product,
+            author=current_user
+        )
+        db.session.add(new_comment)
+        db.session.commit()
+    return render_template("placeholder", form=comment, product=shown_product, product_id=product_id)
 
 
 if __name__ == "__main__":
