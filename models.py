@@ -26,7 +26,7 @@ class User(UserMixin, db.Model):
     role: Mapped[str] = mapped_column(String, default="user", nullable=False)
 
     # customerDetails nullable if employee/admin
-    customerDetails: Mapped["CustomerDetails"] = relationship("Customer")
+    customerDetails: Mapped["CustomerDetails"] = relationship(back_populates="user")
 
 
 class CustomerDetails(db.Model):
