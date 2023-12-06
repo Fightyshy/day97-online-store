@@ -76,6 +76,18 @@ class UserRegistrationForm(UserForm):
     username = StringField("Username", validators=[DataRequired()])
     submit = SubmitField("Register")
 
+
+class UserPasswordResetEmailForm(FlaskForm):
+    email = StringField("Email", validators=[DataRequired(), Email()])
+    submit = SubmitField("Send reset link")
+
+
+class UserPasswordResetForm(FlaskForm):
+    password = StringField("Password", validators=[DataRequired()])
+    repeat = StringField("Repeat password", validators=[DataRequired()])
+    submit = SubmitField("Reset password")
+
+
 # Online store forms
 
 
