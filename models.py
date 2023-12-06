@@ -98,6 +98,8 @@ class ShoppingCart(db.Model):
     __tablename__ = "shoppingcarts"
 
     id: Mapped[int] = mapped_column(Integer, primary_key=True)
+    # Using a unique ID for shopping cart/order saving
+    product_uid: Mapped[str] = mapped_column(String(length=10), nullable=False)
     # Server sets added time
     date_added: Mapped[dt.datetime] = mapped_column(
         Date(), nullable=False, default=dt.datetime.now().date()
@@ -109,7 +111,7 @@ class ShoppingCart(db.Model):
 
     # TODO 1>1 product
 
-    product: Mapped["Product"] = relationship()
+    # product: Mapped["Product"] = relationship()
 
 
 class Order(db.Model):
@@ -118,7 +120,7 @@ class Order(db.Model):
     __tablename__ = "orders"
 
     id: Mapped[int] = mapped_column(Integer, primary_key=True)
-
+    product_uid: Mapped[str] = mapped_column(String(length=10), nullable=False)
     order_date: Mapped[dt.datetime] = mapped_column(
         Date(), nullable=False, default=dt.datetime.now().date()
     )
@@ -138,6 +140,7 @@ class Product(db.Model):
     __tablename__ = "products"
 
     id: Mapped[int] = mapped_column(Integer, primary_key=True)
+    product_uid: Mapped[str] = mapped_column(String(length=10), nullable=False)
     name: Mapped[str] = mapped_column(String, nullable=False)
     price: Mapped[float] = mapped_column(Float, nullable=False)
     description: Mapped[str] = mapped_column(String, nullable=False)
@@ -148,7 +151,7 @@ class Product(db.Model):
     # comments on product
     comments: Mapped["Comment"] = relationship(back_populates="comments")
 
-    cart_id: Mapped[int] = mapped_column(ForeignKey("shoppingcarts.id"))
-    cart: Mapped["ShoppingCart"] = relationship(
-        back_populates="product", single_parent=True
-    )
+    # cart_id: Mapped[int] = mapped_column(ForeignKey("shoppingcarts.id"))
+    # cart: Mapped["ShoppingCart"] = relationship(
+    #     back_populates="product", single_parent=True
+    # )
