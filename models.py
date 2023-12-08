@@ -19,9 +19,9 @@ class User(UserMixin, db.Model):
     __tablename__ = "users"
 
     id: Mapped[int] = mapped_column(Integer, primary_key=True)
-    username: Mapped[str] = mapped_column(String, nullable=False)
+    username: Mapped[str] = mapped_column(String, nullable=False, unique=True)
     password: Mapped[str] = mapped_column(String, nullable=False)
-    email: Mapped[str] = mapped_column(String, nullable=False)
+    email: Mapped[str] = mapped_column(String, nullable=False, unique=True)
     # customer, employee, admin
     role: Mapped[str] = mapped_column(String, default="user", nullable=False)
 
@@ -72,6 +72,14 @@ class Address(db.Model):
     customer: Mapped["CustomerDetails"] = relationship(
         back_populates="addresses", single_parent=True
     )
+
+class ResetTokens(db.Model):
+    """Password reset token temp store"""
+    __tablename__ = "tokens"
+    id: Mapped[int] = mapped_column(Integer, primary_key=True)
+    username: Mapped[str] = mapped_column(String, nullable=False)
+    email: Mapped[str] = mapped_column(String, nullable=False)
+    token: Mapped[str] = mapped_column(String, nullable=False)
 
 class Comment(db.Model):
     """Customer comment made on product, customer details and product parent"""
