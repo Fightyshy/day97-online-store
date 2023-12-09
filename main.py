@@ -21,7 +21,7 @@ SENDER = "testingtontester61@gmail.com"
 SENDER_PASSWORD = "dyuqvhdfhrexshoa"
 
 app = Flask(__name__)
-app.config["SECRET_KEY"] = "8BYkEfBA6O6donzWlSihBXox7C0sKR6b" #csrf
+app.config["SECRET_KEY"] = "8BYkEfBA6O6donzWlSihBXox7C0sKR6b"  # csrf
 app.config["SQLALCHEMY_DATABASE_URI"] = "sqlite:///store.db"
 Bootstrap5(app)
 db.init_app(app)
@@ -109,18 +109,23 @@ def login():
         "login.html", form=loginform, current_user=current_user
     )
 
+
 @app.route("/logout")
 def logout():
     logout_user()
     return redirect(url_for("home"))
 
+
 @app.route("/users/register", methods=["GET", "POST"])
 def register():
     registerform = UserRegistrationForm()
     if registerform.validate_on_submit():
-        if db.session.execute(
-            db.select(User).where(User.email == registerform.email.data)
-        ).scalar() is not None:
+        if (
+            db.session.execute(
+                db.select(User).where(User.email == registerform.email.data)
+            ).scalar()
+            is not None
+        ):
             flash("User email already exists, login using it")
             return redirect((url_for("login")))
         if registerform.password.data == registerform.repeat_password.data:
@@ -155,17 +160,17 @@ def reset_password():
             "username": selected_user.username,
             "email": selected_user.email,
             # expire +6 hours from generation
-            "exp": dt.datetime.now()+dt.timedelta(hours=6)
+            "exp": dt.datetime.now() + dt.timedelta(hours=6),
         }
         # encode to jwt with hs256 and secret
-        token_secret = selected_user.username+selected_user.email
+        token_secret = selected_user.username + selected_user.email
         token = jwt.encode(reset, token_secret, algorithm="HS256")
 
         # add to pass reset db with email and username
         trunc_hash = ResetTokens(
             username=selected_user.username,
             email=selected_user.email,
-            token=token
+            token=token,
         )
         db.session.add(trunc_hash)
         db.session.commit()
@@ -187,35 +192,53 @@ def reset_password():
     return render_template("reset-password.html", form=emailform)
 
 
-@app.route("/users/validate-reset")
+@app.route("/users/validate-reset", methods=["GET", "POST"])
 def validate_reset():
+    resetform = UserPasswordResetForm()
     try:
         # try to get request token
         token = request.args.get("reset_token")
-        # try to decode token
-        selected_token = db.session.execute(db.select(ResetTokens).where(ResetTokens.token==token)).scalar()
-        decoded_token = jwt.decode(token, selected_token.username+selected_token.email, ["HS256"])
-        # check if token is expired and flash if it is
-        if decoded_token["exp"] < dt.datetime.now():
-            flash("This password token has expired.")
-            return redirect(url_for("reset_password"))
     except KeyError:
         # flash link invalidity and redirect to reset screen
         flash("The reset link is invalid.")
         return redirect(url_for("reset_password"))
     else:
-        resetform = UserPasswordResetForm()
         if resetform.validate_on_submit():
-            # Retrieve user with email
-            selected_user = db.session.execute(db.select(User).where(User.email==decoded_token["email"])).scalar()
+            # reacquire token
+            token = resetform.token.data
+            # try to decode token
+            selected_token = db.session.execute(
+                db.select(ResetTokens).where(ResetTokens.token == token)
+            ).scalar()
+            decoded_token = jwt.decode(
+                token, selected_token.username + selected_token.email, ["HS256"]
+            )
+            # check if token is expired and flash if it is
+            if (
+                dt.datetime.fromtimestamp(decoded_token["exp"]).date()
+                < dt.datetime.now().date()
+            ):
+                flash("This password token has expired.")
+                return redirect(url_for("reset_password"))
+            # elif resetform.password.data != resetform.repeat.data:
+            #     flash("The passwords do not match, please try again.")
+            #     return redirect(url_for("validate_reset", token=token))
+                # Retrieve user with email
+            selected_user = db.session.execute(
+                db.select(User).where(User.email == decoded_token["email"])
+            ).scalar()
             # Change password and update db
-            selected_user.password = generate_password_hash(resetform.password.data)
+            selected_user.password = generate_password_hash(
+                resetform.password.data
+            )
+            db.session.delete(selected_token)
             db.session.commit()
 
             # Render success page
             return render_template("successful-reset.html")
-
-        return render_template("new-password.html", form=resetform)
+        return render_template(
+            "new-password.html", form=resetform, token=token
+        )
 
     # TODO validate dual password input
 

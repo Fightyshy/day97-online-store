@@ -1,6 +1,7 @@
 import datetime as dt
 from flask_wtf import FlaskForm
 from wtforms import (
+    HiddenField,
     IntegerField,
     StringField,
     DateField,
@@ -83,6 +84,7 @@ class UserPasswordResetEmailForm(FlaskForm):
 
 
 class UserPasswordResetForm(FlaskForm):
+    token = HiddenField(validators=[DataRequired()])
     password = StringField("Password", validators=[DataRequired()])
     repeat = StringField("Repeat password", validators=[DataRequired()])
     submit = SubmitField("Reset password")
