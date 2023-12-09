@@ -3,6 +3,7 @@ from flask_wtf import FlaskForm
 from wtforms import (
     HiddenField,
     IntegerField,
+    PasswordField,
     StringField,
     DateField,
     SelectField,
@@ -65,7 +66,7 @@ class UserForm(FlaskForm):
     """User login form"""
 
     email = StringField("Email", validators=[DataRequired(), Email()])
-    password = StringField("Password", validators=[DataRequired()])
+    password = PasswordField("Password", validators=[DataRequired()])
     submit = SubmitField("Login")
 
 
@@ -73,7 +74,7 @@ class UserRegistrationForm(UserForm):
     """User registration form inherits login form fields"""
 
     # No need for def self and super according to docs
-    repeat_password = StringField("Repeat password", validators=[DataRequired()])
+    repeat_password = PasswordField("Repeat password", validators=[DataRequired()])
     username = StringField("Username", validators=[DataRequired()])
     submit = SubmitField("Register")
 
@@ -85,8 +86,8 @@ class UserPasswordResetEmailForm(FlaskForm):
 
 class UserPasswordResetForm(FlaskForm):
     token = HiddenField(validators=[DataRequired()])
-    password = StringField("Password", validators=[DataRequired()])
-    repeat = StringField("Repeat password", validators=[DataRequired()])
+    password = PasswordField("Password", validators=[DataRequired()])
+    repeat = PasswordField("Repeat password", validators=[DataRequired()])
     submit = SubmitField("Reset password")
 
 
