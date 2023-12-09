@@ -8,22 +8,27 @@
         <link rel="stylesheet" href="assets/css/styles.css">
     </head>
     <body>
-        <header class="d-flex flex-wrap align-items-center justify-content-center justify-content-md-between py-3 px-3 mb-4 border-bottom">
+        <header class="d-flex flex-wrap justify-content-center justify-content-md-between py-3 px-3 mb-4 border-bottom">
             <div class="col-md-3 mb-2 mb-md-0">
                 <a href="/" class="d-inline-flex link-body-emphasis text-decoration-none">
                     <span class="fs-4">The Grimmoire Infinitum</span>
                 </a>
             </div>
+            <ul class="nav nav-pills gap-2">
+                {% if current_user.role=="admin" %}
+                <li class="nav-item"><a href="#" class="btn btn-primary">User control panel</a></li>
+                {% endif %}
+                {% if current_user.role=="admin" or current_user.role=="employee" %}
+                <li class="nav-item"><a href="#" class="btn btn-primary">Products control panel</a></li>
+                {% endif %}
 
-            <div class="col-md-3 text-end">
                 {% if not current_user.is_authenticated %}
-                <a href="{{ url_for('login') }}" class="btn btn-primary">Login</a>
-                <a href="{{ url_for('register') }}" class="btn btn-primary">Register</a>
+                <li class="nav-item"><a href="{{ url_for('login') }}" class="btn btn-primary">Login</a></li>
+                <li class="nav-item"><a href="{{ url_for('register') }}" class="btn btn-primary">Register</a></li>
+                {% else %}
+                <li class="nav-item"><a href="#" class="btn btn-primary">Shopping Cart</a></li>
+                <li class="nav-item"><a href="{{ url_for('logout') }}" class="btn btn-primary">Logout</a></li>
+                <span>Welcome back {{current_user.username}}!</span>
                 {% endif %}
-                {% if current_user.is_authenticated %}
-                <span>Hello {{current_user.username}}!</p>
-                <a href="#" class="btn btn-primary">Shopping Cart</a>
-                <a href="{{ url_for('logout') }}" class="btn btn-primary">Logout</a>
-                {% endif %}
-            </div>
+            </ul>
         </header>
