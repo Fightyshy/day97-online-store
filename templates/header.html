@@ -6,6 +6,7 @@
         <meta charset="UTF-8">
         {{ bootstrap.load_css() }}
         <link rel="stylesheet" href="assets/css/styles.css">
+        <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.5.1/jquery.min.js"></script>
     </head>
     <body>
         <header class="d-flex flex-wrap justify-content-center justify-content-md-between py-3 px-3 mb-4 border-bottom">
@@ -16,7 +17,7 @@
             </div>
             <ul class="nav nav-pills gap-2">
                 {% if current_user.role=="admin" %}
-                <li class="nav-item"><a href="#" class="btn btn-primary">User control panel</a></li>
+                <li class="nav-item"><a href="{{ url_for('user_control_panel') }}" class="btn btn-primary">User control panel</a></li>
                 {% endif %}
                 {% if current_user.role=="admin" or current_user.role=="employee" %}
                 <li class="nav-item"><a href="#" class="btn btn-primary">Products control panel</a></li>
@@ -26,7 +27,9 @@
                 <li class="nav-item"><a href="{{ url_for('login') }}" class="btn btn-primary">Login</a></li>
                 <li class="nav-item"><a href="{{ url_for('register') }}" class="btn btn-primary">Register</a></li>
                 {% else %}
+                {% if current_user.role=="user" %}
                 <li class="nav-item"><a href="#" class="btn btn-primary">Shopping Cart</a></li>
+                {% endif %}
                 <li class="nav-item"><a href="{{ url_for('logout') }}" class="btn btn-primary">Logout</a></li>
                 <span>Welcome back {{current_user.username}}!</span>
                 {% endif %}

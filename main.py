@@ -88,6 +88,27 @@ def edit_address(user_id, address_id):
 
 
 # user handling endpoints
+@app.route("/users/control-panel", methods=["GET", "POST"])
+def user_control_panel():
+    # get all users
+    user_list = db.session.execute(db.select(User)).scalars().all()
+
+    return render_template("user-control.html", users=user_list)
+
+@app.route("/users/delete-user/<int:user_id>")
+def delete_user(user_id):
+    selected_user = db.get_or_404(User, user_id)
+    db.session.delete(selected_user)
+    return redirect(url_for("user_control_panel"))
+
+@app.route("/users/edit-user/<int:user_id>")
+def edit_user(user_id):
+    # TODO handle AJAX
+    # TODO recieve field inputs
+    # TODO select user and update user fields
+    # TODO commit to database
+    return "" # AJAX no redirect/render
+
 @app.route("/users/login", methods=["GET", "POST"])
 def login():
     loginform = UserForm()
