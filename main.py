@@ -1,7 +1,7 @@
 import smtplib
 import jwt
 import datetime as dt
-from flask_login import LoginManager, current_user, login_user
+from flask_login import LoginManager, current_user, login_user, logout_user
 from models import db, Product, Comment, User, ResetTokens
 from flask import Flask, flash, redirect, render_template, request, url_for
 from forms import (
@@ -27,8 +27,8 @@ Bootstrap5(app)
 db.init_app(app)
 
 # sqlite db, will convert to local postgres db and dump creation script
-# with app.app_context():
-#     db.create_all()
+with app.app_context():
+    db.create_all()
 
 login_manager = LoginManager()
 login_manager.init_app(app)
@@ -104,11 +104,15 @@ def login():
             return redirect(url_for("login"))
         else:
             login_user(user)
-            return redirect(url_for("main_page"))
+            return redirect(url_for("home"))
     return render_template(
         "login.html", form=loginform, current_user=current_user
     )
 
+@app.route("/logout")
+def logout():
+    logout_user()
+    return redirect(url_for("home"))
 
 @app.route("/users/register", methods=["GET", "POST"])
 def register():
@@ -116,10 +120,10 @@ def register():
     if registerform.validate_on_submit():
         if db.session.execute(
             db.select(User).where(User.email == registerform.email.data)
-        ):
+        ).scalar() is not None:
             flash("User email already exists, login using it")
             return redirect((url_for("login")))
-        if registerform.password.data == registerform.repeat_pw.data:
+        if registerform.password.data == registerform.repeat_password.data:
             hashed_pw = generate_password_hash(registerform.password.data)
             new_user = User(
                 username=registerform.username.data,
@@ -130,7 +134,7 @@ def register():
             db.session.add(new_user)
             db.session.commit()
             login_user(new_user)
-            return redirect(url_for("main_page"))
+            return redirect(url_for("home"))
         else:
             pass
     return render_template(
@@ -145,6 +149,7 @@ def reset_password():
         selected_user = db.session.execute(
             db.select(User).where(User.email == emailform.email.data)
         ).scalar()
+        print(selected_user)
         # create jwt payload
         reset = {
             "username": selected_user.username,
@@ -154,25 +159,22 @@ def reset_password():
         }
         # encode to jwt with hs256 and secret
         token_secret = selected_user.username+selected_user.email
-        token = jwt.encode(reset, token_secret, algorithm=["HS256"])
+        token = jwt.encode(reset, token_secret, algorithm="HS256")
 
         # add to pass reset db with email and username
         trunc_hash = ResetTokens(
-            username=selected_user.username.data,
-            email=selected_user.email.data,
+            username=selected_user.username,
+            email=selected_user.email,
             token=token
         )
         db.session.add(trunc_hash)
         db.session.commit()
 
-        # TODO smtp send link+reset-token param and hash
+        # smtp send link+reset-token param and hash
         with smtplib.SMTP("smtp.gmail.com", port=587) as mailer:
-            message = f"""We've recieved a password reset request for your
-                            account\n
-                            Here's the link {url_for("validate_reset", reset_token=hash)}\n\n
-                        If you did not request this password reset to your
-                        account
-                        please ignore this email."""
+            message = f"""We've recieved a password reset request for your account
+                        Here's the link http://localhost:5000{url_for("validate_reset", reset_token=trunc_hash.token)}
+                        If you did not request this password reset to your account please ignore this email."""
             mailer.starttls()
             mailer.login(user=SENDER, password=SENDER_PASSWORD)
             mailer.sendmail(
@@ -180,8 +182,7 @@ def reset_password():
                 from_addr="test@test.com",
                 msg=f"Subject:Store user password reset\n\n{message}",
             )
-        # TODO render confirm reset page
-        return render_template("confirm_reset.html")
+        return render_template("confirm-reset.html")
 
     return render_template("reset-password.html", form=emailform)
 
@@ -189,25 +190,34 @@ def reset_password():
 @app.route("/users/validate-reset")
 def validate_reset():
     try:
+        # try to get request token
         token = request.args.get("reset_token")
+        # try to decode token
+        selected_token = db.session.execute(db.select(ResetTokens).where(ResetTokens.token==token)).scalar()
+        decoded_token = jwt.decode(token, selected_token.username+selected_token.email, ["HS256"])
+        # check if token is expired and flash if it is
+        if decoded_token["exp"] < dt.datetime.now():
+            flash("This password token has expired.")
+            return redirect(url_for("reset_password"))
     except KeyError:
-        # TODO show invalid link error
-        pass
+        # flash link invalidity and redirect to reset screen
+        flash("The reset link is invalid.")
+        return redirect(url_for("reset_password"))
     else:
-        # TODO reconstruct hash
-
-        # 
         resetform = UserPasswordResetForm()
-        pass
+        if resetform.validate_on_submit():
+            # Retrieve user with email
+            selected_user = db.session.execute(db.select(User).where(User.email==decoded_token["email"])).scalar()
+            # Change password and update db
+            selected_user.password = generate_password_hash(resetform.password.data)
+            db.session.commit()
 
-    # TODO request.args.reset-token param
-    # TODO select from pass reset db and get email+username
-    # TODO select from user db with email+username
+            # Render success page
+            return render_template("successful-reset.html")
+
+        return render_template("new-password.html", form=resetform)
+
     # TODO validate dual password input
-    # TODO hash password
-    # TODO update selected user with new password
-    # TODO render success page
-    return render_template("successful-reset.html")
 
 
 # Retail store endpoints
