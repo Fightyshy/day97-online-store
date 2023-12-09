@@ -13,6 +13,7 @@ from forms import (
 )
 from sqlalchemy import func
 from werkzeug.security import generate_password_hash, check_password_hash
+from flask_bootstrap import Bootstrap5
 
 # consts
 # Temp email consts
@@ -20,8 +21,9 @@ SENDER = "testingtontester61@gmail.com"
 SENDER_PASSWORD = "dyuqvhdfhrexshoa"
 
 app = Flask(__name__)
+app.config["SECRET_KEY"] = "8BYkEfBA6O6donzWlSihBXox7C0sKR6b" #csrf
 app.config["SQLALCHEMY_DATABASE_URI"] = "sqlite:///store.db"
-
+Bootstrap5(app)
 db.init_app(app)
 
 # sqlite db, will convert to local postgres db and dump creation script
@@ -54,7 +56,7 @@ def home():
     )
 
     # print([value.comments.rating for value in featured_products])
-    return render_template("", featured=featured_products)
+    return render_template("index.html", featured=featured_products)
 
 
 @app.route("/user/<int:user_id>")

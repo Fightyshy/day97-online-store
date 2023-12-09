@@ -1,0 +1,29 @@
+{% include "header.html" %}
+{% from 'bootstrap5/form.html' import render_form %}
+<div class="d-flex flex-column flex-md-row p-4 gap-4 py-md-5 align-items-center justify-content-center">
+    <main class="form-signin w-50 m-auto justify-content-center">
+        {% with messages = get_flashed_messages() %}
+        {% if messages %}
+        {% for message in messages %}
+        <p class="flash">{{ message }}</p>
+        {% endfor %}
+        {% endif %}
+        {% endwith %}
+        <form action="{{ url_for('login') }}" method="post">
+            {{ form.csrf_token }}
+            <h1 class="h3 mb-3 fw-normal">Sign in</h1>
+
+            <div class="form-floating">
+                {{ form.email(class="form-control", placeholder="") }}
+                {{ form.email.label(for="email") }}
+            </div>
+            <div class="form-floating">
+                {{ form.password(class="form-control", placeholder="")}}
+                {{ form.password.label(for="password") }}
+            </div>
+
+            {{ form.submit(class="btn btn-primary w-100 py-2") }}
+        </form>
+    </main>
+</div>
+{% include "footer.html" %}
