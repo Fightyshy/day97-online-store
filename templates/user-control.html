@@ -13,13 +13,66 @@
       {% for user in users: %}
       <tr>
         <!-- Decide to use either modals or inplace fields to AJAX -->
-        <th scope="row">{{ user.username }}</th>
-        <td>{{ user.email }}</td>
-        <td>{{ user.role }}</td>
+        <th id="user-{{user.id}}-username" scope="row">{{ user.username }}</th>
+        <td id="user-{{user.id}}-email" scope="row">{{ user.email }}</td>
+        <td id="user-{{user.id}}-role" scope="row">{{ user.role }}</td>
         {% if current_user.is_authenticated and current_user.role=="admin" %}
-        <td>
-          <a href="#">Edit user</a>
-          <a href="#">Delete user</a>
+        <td scope="row">
+          {% if user.role=="user" %}
+          <a href="#" class="btn btn-primary">Edit user details</a>
+          {% endif %}
+          {% if current_user.id != user.id %}
+          <button type="button" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#edit-role-modal-{{user.id}}">
+            Edit role
+          </button>
+          <a href="{{url_for('delete_user', user_id=user.id)}}" class="btn btn-primary">Delete user</a>
+          {% endif %}
+          <!-- Modal -->
+          <div class="modal fade" id="edit-role-modal-{{user.id}}" tabindex="-1" aria-labelledby="edit-role-modal-{{user.id}}-label" aria-hidden="true">
+            <div class="modal-dialog">
+              <div class="modal-content">
+                <div class="modal-header">
+                  <h1 class="modal-title fs-5" id="edit-role-modal-{{user.id}}-label">Modal title</h1>
+                  <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <form id="edit-role-{{user.id}}" action="{{url_for('edit_role', user_id=user.id)}}" method="post">
+                  <div class="modal-body">
+                    {{ form.csrf_token }}
+                    <div class="form-control">
+                      {{ form.role.label(for=role) }}
+                      {{ form.role }}
+                    </div>
+                    
+                  </div>
+                  <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                    {{ form.submit(class="btn btn-primary") }}
+                  </div>
+                </form>
+              </div>
+            </div>
+          </div>
+          <script type="text/javascript">
+            $("#edit-role-{{user.id}}").submit(function(event){
+              
+              $.ajax({
+                //https://stackoverflow.com/questions/21917016/ajax-post-data-in-flask-view
+                // directly set form serilaisation to data
+                data: $(this).serialize(),
+                type: "POST",
+                url: $(this).attr("action")
+              }).done(function(data){
+                $("#user-{{user.id}}-role").text(data.role)
+                alert("User role has been updated")
+                $("#edit-role-modal-{{user.id}}").modal("hide")
+                //Incase you want to render in place
+                //https://stackoverflow.com/questions/40391566/render-jinja-after-jquery-ajax-request-to-flask
+                //We will refresh though because it makes more sense, not to mention it's easier
+                location.reload()
+              })
+              event.preventDefault()
+            })
+          </script>
         </td>
         {% endif %}
       </tr>

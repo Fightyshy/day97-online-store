@@ -3,9 +3,18 @@ import jwt
 import datetime as dt
 from flask_login import LoginManager, current_user, login_user, logout_user
 from models import db, Product, Comment, User, ResetTokens
-from flask import Flask, flash, redirect, render_template, request, url_for
+from flask import (
+    Flask,
+    flash,
+    jsonify,
+    redirect,
+    render_template,
+    request,
+    url_for,
+)
 from forms import (
     CommentForm,
+    UserEditRoleForm,
     UserForm,
     UserRegistrationForm,
     UserPasswordResetEmailForm,
@@ -92,22 +101,33 @@ def edit_address(user_id, address_id):
 def user_control_panel():
     # get all users
     user_list = db.session.execute(db.select(User)).scalars().all()
+    roleform = UserEditRoleForm()
 
-    return render_template("user-control.html", users=user_list)
+    return render_template("user-control.html", users=user_list, form=roleform)
+
 
 @app.route("/users/delete-user/<int:user_id>")
 def delete_user(user_id):
     selected_user = db.get_or_404(User, user_id)
     db.session.delete(selected_user)
+    db.session.commit()
     return redirect(url_for("user_control_panel"))
 
-@app.route("/users/edit-user/<int:user_id>")
-def edit_user(user_id):
-    # TODO handle AJAX
-    # TODO recieve field inputs
-    # TODO select user and update user fields
-    # TODO commit to database
-    return "" # AJAX no redirect/render
+
+@app.route("/users/edit-role/<int:user_id>", methods=["POST"])
+def edit_role(user_id):
+    # handle AJAX
+    if request.method == "POST":
+        # recieve field inputs
+        new_role = request.form.get("role")
+        # select user and update user fields and commit
+        selected_user = db.get_or_404(User, user_id)
+        selected_user.role = new_role
+        db.session.commit()
+        return jsonify({"role": selected_user.role})
+    # AJAX no redirect/render
+    return ""
+
 
 @app.route("/users/login", methods=["GET", "POST"])
 def login():
@@ -232,7 +252,9 @@ def validate_reset():
                 db.select(ResetTokens).where(ResetTokens.token == token)
             ).scalar()
             decoded_token = jwt.decode(
-                token, selected_token.username + selected_token.email, ["HS256"]
+                token,
+                selected_token.username + selected_token.email,
+                ["HS256"],
             )
             # check if token is expired and flash if it is
             if (
@@ -244,7 +266,7 @@ def validate_reset():
             # elif resetform.password.data != resetform.repeat.data:
             #     flash("The passwords do not match, please try again.")
             #     return redirect(url_for("validate_reset", token=token))
-                # Retrieve user with email
+            # Retrieve user with email
             selected_user = db.session.execute(
                 db.select(User).where(User.email == decoded_token["email"])
             ).scalar()

@@ -24,13 +24,21 @@ class AddressForm(FlaskForm):
     address_two = StringField("Line two")
     state = StringField("State/Province", validators=[DataRequired()])
     city = StringField("City", validators=[DataRequired()])
-    postal_code = StringField("Postal Code", validators=[DataRequired(), Length(min=5)])
+    postal_code = StringField(
+        "Postal Code", validators=[DataRequired(), Length(min=5)]
+    )
     country = SelectField("Country", choices=[], validators=[DataRequired()])
     same_number = BooleanField(
-        "Phone number is same as in details", validators=[DataRequired()], default=False
+        "Phone number is same as in details",
+        validators=[DataRequired()],
+        default=False,
     )
-    phone_code = SelectField("Country code", choices=[], validators=[DataRequired()])
-    phone_number = StringField("Phone number", validators=[Regexp("[0-9]{7,15}")])
+    phone_code = SelectField(
+        "Country code", choices=[], validators=[DataRequired()]
+    )
+    phone_number = StringField(
+        "Phone number", validators=[Regexp("[0-9]{7,15}")]
+    )
 
     submit = SubmitField("Save address")
 
@@ -55,7 +63,9 @@ class CustomerDetailsForm(FlaskForm):
     first_name = StringField("First name", validators=[DataRequired()])
     last_name = StringField("Last name", validators=[DataRequired()])
     date_of_birth = DateField("Date of birth", validators=[DataRequired()])
-    phone_code = SelectField("Country code", choices=[], validators=[DataRequired()])
+    phone_code = SelectField(
+        "Country code", choices=[], validators=[DataRequired()]
+    )
     phone_number = StringField(
         "Phone number", validators=[DataRequired(), Regexp("[0-9]{7,15}")]
     )
@@ -74,7 +84,9 @@ class UserRegistrationForm(UserForm):
     """User registration form inherits login form fields"""
 
     # No need for def self and super according to docs
-    repeat_password = PasswordField("Repeat password", validators=[DataRequired()])
+    repeat_password = PasswordField(
+        "Repeat password", validators=[DataRequired()]
+    )
     username = StringField("Username", validators=[DataRequired()])
     submit = SubmitField("Register")
 
@@ -91,6 +103,15 @@ class UserPasswordResetForm(FlaskForm):
     submit = SubmitField("Reset password")
 
 
+class UserEditRoleForm(FlaskForm):
+    role = SelectField(
+        "Role",
+        choices=["admin", "employee", "user"],
+        validators=[DataRequired()],
+    )
+    submit = SubmitField("Save role")
+
+
 # Online store forms
 
 
@@ -105,9 +126,10 @@ class ProductForm(FlaskForm):
     stock = IntegerField(
         "Quantity in stock", validators=[DataRequired(), NumberRange(min=1)]
     )
+    # Upload from user's pc to server, save in same root as loc under /images
     image = StringField(
         "Image", validators=[DataRequired()]
-    )  # Upload from user's pc to server, save in same root as loc under /images
+    )
     category = SelectField("Category", choices=[], validators=[DataRequired()])
     submit = SubmitField("Add product")
 
@@ -119,7 +141,11 @@ class CommentForm(FlaskForm):
         "Comment",
         validators=[
             DataRequired(),
-            Length(1, 500, message="Please keep your comment within 500 characters"),
+            Length(
+                1,
+                500,
+                message="Please keep your comment within 500 characters",
+            ),
         ],
     )
     rating = SelectField(
