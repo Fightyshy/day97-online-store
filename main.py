@@ -14,6 +14,7 @@ from flask import (
 )
 from forms import (
     CommentForm,
+    ProductForm,
     UserEditRoleForm,
     UserForm,
     UserRegistrationForm,
@@ -23,6 +24,7 @@ from forms import (
 from sqlalchemy import func
 from werkzeug.security import generate_password_hash, check_password_hash
 from flask_bootstrap import Bootstrap5
+from helper_funcs import generate_list_id
 
 # consts
 # Temp email consts
@@ -47,7 +49,7 @@ login_manager.init_app(app)
 def load_user(user_id):
     return db.get_or_404(User, user_id)
 
-
+# product handling
 @app.route("/")
 def home():
     # join with comments to access comment.rating
@@ -66,6 +68,73 @@ def home():
 
     # print([value.comments.rating for value in featured_products])
     return render_template("index.html", featured=featured_products)
+
+
+# Retail store endpoints
+# GET only
+@app.route("/products/<int:product_id>")
+def show_product(product_id):
+    shown_product = db.get_or_404(Product, product_id)
+    comment = CommentForm()
+    if comment.validate_on_submit():
+        rating_val = len(comment.rating.data)
+        new_comment = Comment(
+            text=comment.text.data,
+            rating=rating_val,
+            product=show_product,
+            author=current_user,
+        )
+        db.session.add(new_comment)
+        db.session.commit()
+    return render_template(
+        "placeholder",
+        form=comment,
+        product=shown_product,
+        product_id=product_id,
+    )
+
+
+@app.route("/products/control-panel", methods=["GET", "POST"])
+def product_control_panel():
+    product_list = db.session.execute(db.select(Product)).scalars().all()
+    productform = ProductForm()
+
+    # if request.method=="POST":
+    if productform.validate_on_submit():
+        product_uid = generate_list_id()
+        while True:
+            if db.session.execute(db.select(Product).where(Product.product_uid==product_uid)).scalar() is not None:
+                product_uid = generate_list_id()
+            else:
+                break
+        new_product = Product(
+            name=productform.name.data,
+            product_uid=product_uid,
+            description=productform.description.data,
+            price=productform.price.data,
+            stock=productform.stock.data,
+            image=productform.image.data,
+            category=productform.category.data,
+        )
+        db.session.add(new_product)
+        db.session.commit()
+        return redirect(url_for("product_control_panel"))
+
+    return render_template("product-control.html", products=product_list, form=productform)
+
+# TODO edit product modal handle
+@app.route("/products/edit-product/<int:product_id>")
+def edit_product():
+    pass
+
+@app.route("/products/delete-product/<int:product_id>")
+def delete_product(product_id):
+    selected_product = db.get_or_404(Product, product_id)
+    db.session.delete(selected_product)
+    db.session.commit()
+    return redirect(url_for("product_control_panel"))
+
+# user handling endpoints
 
 
 @app.route("/user/<int:user_id>")
@@ -96,7 +165,6 @@ def edit_address(user_id, address_id):
     return "Populated form for address"
 
 
-# user handling endpoints
 @app.route("/users/control-panel", methods=["GET", "POST"])
 def user_control_panel():
     # get all users
@@ -284,30 +352,6 @@ def validate_reset():
         )
 
     # TODO validate dual password input
-
-
-# Retail store endpoints
-# GET only
-@app.route("/products/<int:product_id>")
-def show_product(product_id):
-    shown_product = db.get_or_404(Product, product_id)
-    comment = CommentForm()
-    if comment.validate_on_submit():
-        rating_val = len(comment.rating.data)
-        new_comment = Comment(
-            text=comment.text.data,
-            rating=rating_val,
-            product=show_product,
-            author=current_user,
-        )
-        db.session.add(new_comment)
-        db.session.commit()
-    return render_template(
-        "placeholder",
-        form=comment,
-        product=shown_product,
-        product_id=product_id,
-    )
 
 
 if __name__ == "__main__":

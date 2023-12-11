@@ -1,6 +1,7 @@
 import datetime as dt
 from flask_wtf import FlaskForm
 from wtforms import (
+    DecimalField,
     HiddenField,
     IntegerField,
     PasswordField,
@@ -8,8 +9,9 @@ from wtforms import (
     DateField,
     SelectField,
     BooleanField,
-    FloatField,
     SubmitField,
+    FileField,
+    TextAreaField
 )
 from wtforms.validators import DataRequired, Email, Length, Regexp, NumberRange
 
@@ -119,18 +121,18 @@ class ProductForm(FlaskForm):
     """New/Edit product form"""
 
     name = StringField("Product name", validators=[DataRequired()])
-    description = StringField("Description", validators=[DataRequired()])
-    price = FloatField(
+    description = TextAreaField("Description", validators=[DataRequired()])
+    price = DecimalField(
         "Price", validators=[DataRequired(), NumberRange(min=1, max=99999)]
     )
     stock = IntegerField(
         "Quantity in stock", validators=[DataRequired(), NumberRange(min=1)]
     )
     # Upload from user's pc to server, save in same root as loc under /images
-    image = StringField(
+    image = FileField(
         "Image", validators=[DataRequired()]
     )
-    category = SelectField("Category", choices=[], validators=[DataRequired()])
+    category = SelectField("Category", choices=["Wargame Rulebooks", "Miniatures", "Dice", "Accessories", "Roleplaying Rulebooks"], validators=[DataRequired()])
     submit = SubmitField("Add product")
 
 

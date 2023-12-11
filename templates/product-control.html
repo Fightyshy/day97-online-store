@@ -1,0 +1,74 @@
+{% include "header.html" %}
+<div class="px-5">
+  <button class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#add-product-modal">Add product</button>
+  <div class="modal fade" id="add-product-modal" tabindex="-1" aria-labelledby="add-product-modal-label" aria-hidden="true">
+    <div class="modal-dialog">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h1 class="modal-title fs-5" id="add-product-modal-label">Add product</h1>
+          <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+        </div>
+        <form id="add-product" action="{{url_for('product_control_panel')}}" method="post">
+          <div class="modal-body">
+            {{ form.csrf_token }}
+            <div class="mb-3">
+              {{ form.name.label(class="form-label", for="name") }}
+              {{ form.name(class="form-control") }}
+            </div>
+            <div class="mb-3">
+              {{ form.price.label(for="price") }}
+              {{ form.price(class="form-control") }}
+            </div>
+            <div class="mb-3">
+              {{ form.stock.label(for="stock") }}
+              {{ form.stock(class="form-control") }}
+            </div>
+            <div class="mb-3">
+              {{ form.category.label(for="category") }}
+              {{ form.category(class="form-control") }}
+            </div>
+            <div class="mb-3">
+              {{ form.image.label(for="image") }}
+              {{ form.image(class="form-control") }}
+            </div>
+            <div class="mb-3">
+              {{ form.description.label(for="description") }}
+              {{ form.description(class="form-control", style="resize: none;height: 20em") }}
+            </div>
+          </div>
+          <div class="modal-footer">
+            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+            {{ form.submit(class="btn btn-primary", id="add-product-submit") }}
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
+  <table class="table">
+    <thead>
+      <tr>
+        <th scope="col">Name</th>
+        <th scope="col">Price</th>
+        <th scope="col">Category</th>
+        <th scope="col">Stock</th>
+        <th scope="col">Actions</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for product in products: %}
+        <tr>
+          <td scope="row">{{product.name}}</td>
+          <td scope="row">{{product.price}}</td>
+          <td scope="row">{{product.category}}</td>
+          <td scope="row">{{product.stock}}</td>
+          <td>
+            <a href="#" class="btn btn-primary">Edit stock</a>
+            <a href="#" class="btn btn-primary">Edit product</a>
+            <a href="#" class="btn btn-danger">Delete product</a>
+          </td>
+        </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+</div>
+{% include "footer.html" %}
