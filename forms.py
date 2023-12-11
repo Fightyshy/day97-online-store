@@ -1,5 +1,6 @@
 import datetime as dt
 from flask_wtf import FlaskForm
+from flask_wtf.file import FileField, FileAllowed, FileRequired
 from wtforms import (
     DecimalField,
     HiddenField,
@@ -10,7 +11,6 @@ from wtforms import (
     SelectField,
     BooleanField,
     SubmitField,
-    FileField,
     TextAreaField
 )
 from wtforms.validators import DataRequired, Email, Length, Regexp, NumberRange
@@ -128,12 +128,14 @@ class ProductForm(FlaskForm):
     stock = IntegerField(
         "Quantity in stock", validators=[DataRequired(), NumberRange(min=1)]
     )
-    # Upload from user's pc to server, save in same root as loc under /images
+    # Upload from user's pc to server, save in same root as loc under assets/images
+    # jpgs or pngs only, transform image to equiv 200x200px?
     image = FileField(
-        "Image", validators=[DataRequired()]
+        "Image", validators=[FileAllowed(["jpg", "png"])]
     )
     category = SelectField("Category", choices=["Wargame Rulebooks", "Miniatures", "Dice", "Accessories", "Roleplaying Rulebooks"], validators=[DataRequired()])
-    submit = SubmitField("Add product")
+    submit = SubmitField("Save product")
+
 
 
 class CommentForm(FlaskForm):

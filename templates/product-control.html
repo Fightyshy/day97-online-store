@@ -47,6 +47,7 @@
   <table class="table">
     <thead>
       <tr>
+        <th scope="col">UID</th>
         <th scope="col">Name</th>
         <th scope="col">Price</th>
         <th scope="col">Category</th>
@@ -57,18 +58,107 @@
     <tbody>
       {% for product in products: %}
         <tr>
+          <td scope="row">{{product.product_uid}}</td>
           <td scope="row">{{product.name}}</td>
           <td scope="row">{{product.price}}</td>
           <td scope="row">{{product.category}}</td>
           <td scope="row">{{product.stock}}</td>
           <td>
             <a href="#" class="btn btn-primary">Edit stock</a>
-            <a href="#" class="btn btn-primary">Edit product</a>
-            <a href="#" class="btn btn-danger">Delete product</a>
+            <button id="edit-product-modal-button-{{product.id}}" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#edit-product-modal-{{product.id}}">Edit product</button>
+            <a id="delete-product-{{product.product_uid}}" href="{{url_for('delete_product', product_id=product.id)}}" class="btn btn-danger">Delete product</a>
           </td>
         </tr>
+      </tbody>
+      <div class="modal fade" id="edit-product-modal-{{product.id}}" tabindex="-1" aria-labelledby="edit-product-modal-{{product.id}}-label" aria-hidden="true">
+        <div class="modal-dialog">
+          <div class="modal-content">
+            <div class="modal-header">
+              <h1 class="modal-title fs-5" id="edit-product-modal-{{product.id}}-label">Edit product</h1>
+              <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <form id="edit-product-{{product.id}}" action="{{url_for('edit_product', product_id=product.id)}}" method="post">
+              <div class="modal-body">
+                {{ form.csrf_token }}
+                <div class="mb-3">
+                  {{ form.name.label(class="form-label", for="edit-name") }}
+                  {{ form.name(id="edit-name", class="form-control") }}
+                </div>
+                <div class="mb-3">
+                  {{ form.price.label(for="edit-price") }}
+                  {{ form.price(id="edit-price", class="form-control") }}
+                </div>
+                <div class="mb-3">
+                  {{ form.stock.label(for="edit-stock") }}
+                  {{ form.stock(id="edit-stock", class="form-control") }}
+                </div>
+                <div class="mb-3">
+                  {{ form.category.label(for="edit-category") }}
+                  {{ form.category(id="edit-category", class="form-control") }}
+                </div>
+                <div class="mb-3">
+                  {{ form.image.label(for="edit-image") }}
+                  {{ form.image(id="edit-image", class="form-control") }}
+                </div>
+                <div class="mb-3">
+                  {{ form.description.label(for="edit-description") }}
+                  {{ form.description(id="edit-description", class="form-control", style="resize: none;height: 20em") }}
+                </div>
+              </div>
+              <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                {{ form.submit(class="btn btn-primary", id="edit-product-submit") }}
+              </div>
+            </form>
+          </div>
+        </div>
+      </div>
+      <script type="text/javascript">
+        $("#delete-product-{{product.product_uid}}").click(function(event){
+          event.preventDefault();
+          let delConfirm = confirm("Do you want to delete this product?")
+          if(delConfirm==true){
+            $.get(
+              $(this).attr("href"),
+              {},
+              function(data){
+                location.reload();
+                alert("Product UID {{product.product_uid}} has been deleted")
+              }
+            )
+          }
+        })
+
+        $("#edit-product-modal-button-{{product.id}}").click(function(event){
+          event.preventDefault()
+          $.ajax({
+            data: {},
+            type: "GET",
+            url: "{{url_for('edit_product', product_id=product.id)}}"
+          }).done(function(data){
+            $("#edit-name").val(data.product.name)
+            $("#edit-price").val(data.product.price)
+            $("#edit-stock").val(data.product.stock)
+            $("#edit-image").val(data.product.image)
+            $("#edit-category").val(data.product.category).change()
+            $("#edit-description").val(data.product.description)
+          })
+        })
+
+        $("#edit-product-{{product.id}}").submit(function(event){
+          event.preventDefault();
+          $.ajax({
+            data: $(this).serialize(),
+            type: "POST",
+            url: $(this).attr("action")
+          }).done(function(data){
+            location.reload()
+            alert("Product {{product.product_uid}} has been updated")
+          })
+        });
+      </script>
       {% endfor %}
-    </tbody>
   </table>
+
 </div>
 {% include "footer.html" %}

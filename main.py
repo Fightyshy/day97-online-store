@@ -49,6 +49,7 @@ login_manager.init_app(app)
 def load_user(user_id):
     return db.get_or_404(User, user_id)
 
+
 # product handling
 @app.route("/")
 def home():
@@ -103,29 +104,83 @@ def product_control_panel():
     if productform.validate_on_submit():
         product_uid = generate_list_id()
         while True:
-            if db.session.execute(db.select(Product).where(Product.product_uid==product_uid)).scalar() is not None:
+            if (
+                db.session.execute(
+                    db.select(Product).where(
+                        Product.product_uid == product_uid
+                    )
+                ).scalar()
+                is not None
+            ):
                 product_uid = generate_list_id()
             else:
                 break
+        set_image = (
+            "assets/images/defaultimage.jpg"
+            if productform.image.data == ""
+            else f"assets/images/{productform.image.data}"
+        )
         new_product = Product(
             name=productform.name.data,
             product_uid=product_uid,
             description=productform.description.data,
             price=productform.price.data,
             stock=productform.stock.data,
-            image=productform.image.data,
+            image=set_image,
             category=productform.category.data,
         )
         db.session.add(new_product)
         db.session.commit()
         return redirect(url_for("product_control_panel"))
 
-    return render_template("product-control.html", products=product_list, form=productform)
+    return render_template(
+        "product-control.html", products=product_list, form=productform
+    )
+
 
 # TODO edit product modal handle
-@app.route("/products/edit-product/<int:product_id>")
-def edit_product():
-    pass
+@app.route("/products/edit-product/<int:product_id>", methods=["GET", "POST"])
+def edit_product(product_id):
+    # get product from db
+    selected_product = db.get_or_404(Product, product_id)
+    # TODO recieve post request
+    if request.method == "POST":
+        productform = ProductForm(request.form)
+        if productform.validate():
+            if productform.image.data is not None:
+                set_image = f"assets/images/{productform.image.data}"
+                selected_product.image = set_image
+            else:
+                pass
+            selected_product.name = productform.name.data
+            selected_product.description = productform.description.data
+            selected_product.price = productform.price.data
+            selected_product.stock = productform.stock.data
+            selected_product.category = productform.category.data
+            # selected_product.image = productform.image.data   
+            db.session.commit()
+            return ""
+        else:
+            print("test")
+            return ""
+        # TODO edit product from db contents with request
+        # TODO commit changes
+        # TODO refresh
+    payload = jsonify(
+        {
+            "status": "ok",
+            "product": {
+                "name": selected_product.name,
+                "description": selected_product.description,
+                "price": selected_product.price,
+                "stock": selected_product.stock,
+                "category": selected_product.category,
+                "image": selected_product.image,
+            },
+        }
+    )
+    return payload
+
 
 @app.route("/products/delete-product/<int:product_id>")
 def delete_product(product_id):
@@ -133,6 +188,7 @@ def delete_product(product_id):
     db.session.delete(selected_product)
     db.session.commit()
     return redirect(url_for("product_control_panel"))
+
 
 # user handling endpoints
 
