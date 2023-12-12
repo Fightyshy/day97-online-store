@@ -138,6 +138,13 @@ class ProductForm(FlaskForm):
     submit = SubmitField("Save product")
 
 
+class ProductStockForm(FlaskForm):
+    """For editting product stock levels"""
+    stock = IntegerField(
+        "Quantity in stock", validators=[DataRequired(), NumberRange(min=1)]
+    )
+    submit = SubmitField("Save stock")
+
 
 class CommentForm(FlaskForm):
     """Add customer's comment and rating of a product form"""

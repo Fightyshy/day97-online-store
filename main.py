@@ -15,6 +15,7 @@ from flask import (
 from forms import (
     CommentForm,
     ProductForm,
+    ProductStockForm,
     UserEditRoleForm,
     UserForm,
     UserRegistrationForm,
@@ -26,6 +27,7 @@ from werkzeug.security import generate_password_hash, check_password_hash
 from flask_bootstrap import Bootstrap5
 from helper_funcs import generate_list_id
 from flask_ckeditor import CKEditor
+
 # consts
 # Temp email consts
 SENDER = "testingtontester61@gmail.com"
@@ -139,6 +141,18 @@ def product_control_panel():
     )
 
 
+@app.route("/products/edit-stock/<int:product_id>", methods=["GET", "POST"])
+def edit_product_stock(product_id):
+    selected_product = db.get_or_404(Product, product_id)
+    if request.method == "POST":
+        stockform = ProductStockForm(request.form)
+        if stockform.validate():
+            selected_product.stock = stockform.stock.data
+            db.session.commit()
+            return jsonify({"product": {"stock": selected_product.stock}})
+    return jsonify({"product": {"stock": selected_product.stock}})
+
+
 @app.route("/products/edit-product/<int:product_id>", methods=["GET", "POST"])
 def edit_product(product_id):
     # get product from db
@@ -147,7 +161,6 @@ def edit_product(product_id):
     if request.method == "POST":
         productform = ProductForm(request.form)
         if productform.validate():
-            print(productform.image.data)
             if productform.image.data is None:
                 set_image = f"assets/images/{productform.image.data}"
                 selected_product.image = set_image

@@ -57,13 +57,13 @@
     <tbody>
       {% for product in products: %}
         <tr>
-          <td scope="row">{{product.product_uid}}</td>
-          <td scope="row">{{product.name}}</td>
-          <td scope="row">{{product.price}}</td>
-          <td scope="row">{{product.category}}</td>
-          <td scope="row">{{product.stock}}</td>
+          <td id="product-uid-{{product.id}}" scope="row">{{product.product_uid}}</td>
+          <td id="product-name-{{product.id}}" scope="row">{{product.name}}</td>
+          <td id="product-price-{{product.id}}" scope="row">{{product.price}}</td>
+          <td id="product-category-{{product.id}}" scope="row">{{product.category}}</td>
+          <td id="product-stock-{{product.id}}" scope="row">{{product.stock}}</td>
           <td>
-            <a href="#" class="btn btn-primary">Edit stock</a>
+            <button id="edit-stock-modal-button-{{product.id}}" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#edit-stock-modal-{{product.id}}">Edit stock</button>
             <button id="edit-product-modal-button-{{product.id}}" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#edit-product-modal-{{product.id}}">Edit product</button>
             <a id="delete-product-{{product.product_uid}}" href="{{url_for('delete_product', product_id=product.id)}}" class="btn btn-danger">Delete product</a>
           </td>
@@ -118,6 +118,29 @@
           </div>
         </div>
       </div>
+      <div class="modal fade" id="edit-stock-modal-{{product.id}}" tabindex="-1" aria-labelledby="edit-stock-modal-{{product.id}}-label" aria-hidden="true">
+        <div class="modal-dialog">
+          <div class="modal-content">
+            <div class="modal-header">
+              <h1 class="modal-title fs-5" id="edit-stock-modal-{{product.id}}-label">Edit product</h1>
+              <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <form id="edit-stock-form-{{product.id}}" action="{{url_for('edit_product_stock', product_id=product.id)}}" method="post">
+              <div class="modal-body">
+                {{ form.csrf_token }}
+                <div class="mb-3">
+                  {{ form.stock.label(class="form-label", for="edit-stock-"+product.id|string) }}
+                  {{ form.stock(id="edit-stock-quick-"+product.id|string, class="form-control") }}
+                </div>
+              </div>
+              <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                {{ form.submit(class="btn btn-primary", id="edit-stock-submit-"+product.id|string) }}
+              </div>
+            </form>
+          </div>
+        </div>
+      </div>
       <script type="text/javascript">
         $("#delete-product-{{product.product_uid}}").click(function(event){
           event.preventDefault();
@@ -133,24 +156,46 @@
             )
           }
         })
-        $(document).ready(function(){
-          $("#edit-product-modal-button-{{product.id}}").click(function(event){
-            // event.preventDefault();
-            let editForm = $("#edit-product-{{product.id}}")
 
-            $.get(
-              "{{url_for('edit_product', product_id=product.id)}}",
-              {},
-              function(data){
-                // cannot set image field, so we change label to prompt overwrite
-                $("[for='edit-image-{{product.id}}']").text("Image - Upload new image to overwrite old one")
-                $("#edit-name-{{product.id}}").val(data.product.name)
-                $("#edit-price-{{product.id}}").val(data.product.price)
-                $("#edit-stock-{{product.id}}").val(data.product.stock)
-                $("#edit-description-{{product.id}}").val(data.product.description)
-                $("#edit-category-{{product.id}}").val(data.product.category)
-              }
-            )
+        $("#edit-product-modal-button-{{product.id}}").click(function(event){
+          event.preventDefault();
+
+          $.get(
+            "{{url_for('edit_product', product_id=product.id)}}",
+            {},
+            function(data){
+              // cannot set image field, so we change label to prompt overwrite
+              $("[for='edit-image-{{product.id}}']").text("Image - Upload new image to overwrite old one")
+              $("#edit-name-{{product.id}}").val(data.product.name)
+              $("#edit-price-{{product.id}}").val(data.product.price)
+              $("#edit-stock-{{product.id}}").val(data.product.stock)
+              $("#edit-description-{{product.id}}").val(data.product.description)
+              $("#edit-category-{{product.id}}").val(data.product.category)
+            }
+          )
+        })
+
+        $("#edit-stock-modal-button-{{product.id}}").click(function(event){
+          event.preventDefault();
+
+          $.get(
+            "{{url_for('edit_product_stock', product_id=product.id)}}",
+            {},
+            function(data){
+              $("#edit-stock-quick-{{product.id}}").val(data.product.stock)
+            }
+          )
+        })
+
+        $("#edit-stock-form-{{product.id}}").submit(function(event){
+          event.preventDefault();
+          $.ajax({
+            data: $(this).serialize(),
+            type: "POST",
+            url: $(this).attr("action")
+          }).done(function(data){
+            $("#product-stock-{{product.id}}").text(data.product.stock)
+            $("#edit-stock-modal-{{product.id}}").modal("hide")
           })
         })
 
