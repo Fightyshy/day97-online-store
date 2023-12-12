@@ -10,25 +10,24 @@
         </div>
         <form id="add-product" action="{{url_for('product_control_panel')}}" method="post">
           <div class="modal-body">
-            {{ form.csrf_token }}
             <div class="mb-3">
               {{ form.name.label(class="form-label", for="name") }}
               {{ form.name(class="form-control") }}
             </div>
             <div class="mb-3">
-              {{ form.price.label(for="price") }}
+              {{ form.price.label(class="form-label", for="price") }}
               {{ form.price(class="form-control") }}
             </div>
             <div class="mb-3">
-              {{ form.stock.label(for="stock") }}
+              {{ form.stock.label(class="form-label", for="stock") }}
               {{ form.stock(class="form-control") }}
             </div>
             <div class="mb-3">
-              {{ form.category.label(for="category") }}
+              {{ form.category.label(class="form-label", for="category") }}
               {{ form.category(class="form-control") }}
             </div>
             <div class="mb-3">
-              {{ form.image.label(for="image") }}
+              {{ form.image.label(class="form-label", for="image") }}
               {{ form.image(class="form-control") }}
             </div>
             <div class="mb-3">
@@ -77,37 +76,43 @@
               <h1 class="modal-title fs-5" id="edit-product-modal-{{product.id}}-label">Edit product</h1>
               <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
             </div>
+            <!-- https://stackoverflow.com/questions/19161093/convert-integer-to-string-jinja -->
+            <!-- https://stackoverflow.com/questions/67131505/adding-selectqueryfield-id-attribute-in-jinja2 -->
+            <!-- https://stackoverflow.com/questions/49861233/jinja2-concatenate-string-to-get-values-to-input -->
+            <!-- each edit modal has it's own unique name based on db id, maybe swap to product uid? -->
+            <!-- Solution pieced together with the 3 SO questions -->
+            <!-- No, it's not clean, but it works -->
             <form id="edit-product-{{product.id}}" action="{{url_for('edit_product', product_id=product.id)}}" method="post">
               <div class="modal-body">
                 {{ form.csrf_token }}
                 <div class="mb-3">
-                  {{ form.name.label(class="form-label", for="edit-name") }}
-                  {{ form.name(id="edit-name", class="form-control") }}
+                  {{ form.name.label(class="form-label", for="edit-name-"+product.id|string) }}
+                  {{ form.name(id="edit-name-"+product.id|string, class="form-control") }}
                 </div>
                 <div class="mb-3">
-                  {{ form.price.label(for="edit-price") }}
-                  {{ form.price(id="edit-price", class="form-control") }}
+                  {{ form.price.label(class="form-label", for="edit-price-"+product.id|string) }}
+                  {{ form.price(id="edit-price-"+product.id|string, class="form-control") }}
                 </div>
                 <div class="mb-3">
-                  {{ form.stock.label(for="edit-stock") }}
-                  {{ form.stock(id="edit-stock", class="form-control") }}
+                  {{ form.stock.label(class="form-label", for="edit-stock-"+product.id|string) }}
+                  {{ form.stock(id="edit-stock-"+product.id|string, class="form-control") }}
                 </div>
                 <div class="mb-3">
-                  {{ form.category.label(for="edit-category") }}
-                  {{ form.category(id="edit-category", class="form-control") }}
+                  {{ form.category.label(class="form-label", for="edit-category-"+product.id|string) }}
+                  {{ form.category(id="edit-category-"+product.id|string, class="form-select") }}
                 </div>
                 <div class="mb-3">
-                  {{ form.image.label(for="edit-image") }}
-                  {{ form.image(id="edit-image", class="form-control") }}
+                  {{ form.image.label(class="form-label", for="edit-image-"+product.id|string) }}
+                  {{ form.image(id="edit-image-"+product.id|string, class="form-control") }}
                 </div>
                 <div class="mb-3">
-                  {{ form.description.label(for="edit-description") }}
-                  {{ form.description(id="edit-description", class="form-control", style="resize: none;height: 20em") }}
+                  {{ form.description.label(class="form-label", for="edit-description-"+product.id|string) }}
+                  {{ form.description(id="edit-description-"+product.id|string, class="form-control", style="resize: none;height: 20em") }}
                 </div>
               </div>
               <div class="modal-footer">
                 <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
-                {{ form.submit(class="btn btn-primary", id="edit-product-submit") }}
+                {{ form.submit(class="btn btn-primary", id="edit-product-submit-"+product.id|string) }}
               </div>
             </form>
           </div>
@@ -128,33 +133,37 @@
             )
           }
         })
+        $(document).ready(function(){
+          $("#edit-product-modal-button-{{product.id}}").click(function(event){
+            // event.preventDefault();
+            let editForm = $("#edit-product-{{product.id}}")
 
-        $("#edit-product-modal-button-{{product.id}}").click(function(event){
-          event.preventDefault()
-          $.ajax({
-            data: {},
-            type: "GET",
-            url: "{{url_for('edit_product', product_id=product.id)}}"
-          }).done(function(data){
-            $("#edit-name").val(data.product.name)
-            $("#edit-price").val(data.product.price)
-            $("#edit-stock").val(data.product.stock)
-            $("#edit-image").val(data.product.image)
-            $("#edit-category").val(data.product.category).change()
-            $("#edit-description").val(data.product.description)
+            $.get(
+              "{{url_for('edit_product', product_id=product.id)}}",
+              {},
+              function(data){
+                // cannot set image field, so we change label to prompt overwrite
+                $("[for='edit-image-{{product.id}}']").text("Image - Upload new image to overwrite old one")
+                $("#edit-name-{{product.id}}").val(data.product.name)
+                $("#edit-price-{{product.id}}").val(data.product.price)
+                $("#edit-stock-{{product.id}}").val(data.product.stock)
+                $("#edit-description-{{product.id}}").val(data.product.description)
+                $("#edit-category-{{product.id}}").val(data.product.category)
+              }
+            )
           })
         })
 
         $("#edit-product-{{product.id}}").submit(function(event){
           event.preventDefault();
-          $.ajax({
-            data: $(this).serialize(),
-            type: "POST",
-            url: $(this).attr("action")
-          }).done(function(data){
-            location.reload()
-            alert("Product {{product.product_uid}} has been updated")
-          })
+          $.post(
+            $(this).attr("action"),
+            $(this).serialize(),
+            function(data){
+              location.reload();
+              alert("Product {{product.product_uid}} has been updated")
+            }
+          )
         });
       </script>
       {% endfor %}

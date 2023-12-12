@@ -14,6 +14,7 @@ from wtforms import (
     TextAreaField
 )
 from wtforms.validators import DataRequired, Email, Length, Regexp, NumberRange
+from flask_ckeditor import CKEditorField
 
 # User/Customer forms
 

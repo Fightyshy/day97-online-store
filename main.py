@@ -25,7 +25,7 @@ from sqlalchemy import func
 from werkzeug.security import generate_password_hash, check_password_hash
 from flask_bootstrap import Bootstrap5
 from helper_funcs import generate_list_id
-
+from flask_ckeditor import CKEditor
 # consts
 # Temp email consts
 SENDER = "testingtontester61@gmail.com"
@@ -35,6 +35,7 @@ app = Flask(__name__)
 app.config["SECRET_KEY"] = "8BYkEfBA6O6donzWlSihBXox7C0sKR6b"  # csrf
 app.config["SQLALCHEMY_DATABASE_URI"] = "sqlite:///store.db"
 Bootstrap5(app)
+CKEditor(app)
 db.init_app(app)
 
 # sqlite db, will convert to local postgres db and dump creation script
@@ -138,34 +139,31 @@ def product_control_panel():
     )
 
 
-# TODO edit product modal handle
 @app.route("/products/edit-product/<int:product_id>", methods=["GET", "POST"])
 def edit_product(product_id):
     # get product from db
     selected_product = db.get_or_404(Product, product_id)
-    # TODO recieve post request
+    # recieve post request
     if request.method == "POST":
         productform = ProductForm(request.form)
         if productform.validate():
-            if productform.image.data is not None:
+            print(productform.image.data)
+            if productform.image.data is None:
                 set_image = f"assets/images/{productform.image.data}"
                 selected_product.image = set_image
             else:
-                pass
+                selected_product.image = productform.image.data
+            # edit product from db contents with request
             selected_product.name = productform.name.data
             selected_product.description = productform.description.data
             selected_product.price = productform.price.data
             selected_product.stock = productform.stock.data
             selected_product.category = productform.category.data
-            # selected_product.image = productform.image.data   
+            # commit changes
             db.session.commit()
             return ""
         else:
-            print("test")
-            return ""
-        # TODO edit product from db contents with request
-        # TODO commit changes
-        # TODO refresh
+            return jsonify({"status": "not-found"})
     payload = jsonify(
         {
             "status": "ok",
