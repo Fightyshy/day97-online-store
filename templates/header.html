@@ -10,29 +10,41 @@
         <script src="https://cdn.ckeditor.com/ckeditor5/40.2.0/classic/ckeditor.js"></script>
     </head>
     <body>
-        <header class="d-flex flex-wrap justify-content-center justify-content-md-between py-3 px-3 mb-4 border-bottom">
-            <div class="col-md-3 mb-2 mb-md-0">
-                <a href="/" class="d-inline-flex link-body-emphasis text-decoration-none">
-                    <span class="fs-4">The Grimmoire Infinitum</span>
-                </a>
-            </div>
-            <ul class="nav nav-pills gap-2">
-                {% if current_user.role=="admin" %}
-                <li class="nav-item"><a href="{{ url_for('user_control_panel') }}" class="btn btn-primary">User control panel</a></li>
-                {% endif %}
-                {% if current_user.role=="admin" or current_user.role=="employee" %}
-                <li class="nav-item"><a href="{{ url_for('product_control_panel') }}" class="btn btn-primary">Products control panel</a></li>
-                {% endif %}
+        <header class="p-3 mb-3 border-bottom">
+            <div class="container">
+                <div class="d-flex flex-wrap align-items-center justify-content-center justify-content-lg-start">
+                    <a href="/" class="d-flex align-items-center mb-3 mb-md-0 me-md-auto link-body-emphasis text-decoration-none">
+                        <span class="fs-4">The Grimmoire Infinitum</span>
+                    </a>
 
-                {% if not current_user.is_authenticated %}
-                <li class="nav-item"><a href="{{ url_for('login') }}" class="btn btn-primary">Login</a></li>
-                <li class="nav-item"><a href="{{ url_for('register') }}" class="btn btn-primary">Register</a></li>
-                {% else %}
-                {% if current_user.role=="user" %}
-                <li class="nav-item"><a href="#" class="btn btn-primary">Shopping Cart</a></li>
-                {% endif %}
-                <li class="nav-item"><a href="{{ url_for('logout') }}" class="btn btn-primary">Logout</a></li>
-                <span>Welcome back {{current_user.username}}!</span>
-                {% endif %}
-            </ul>
+                    <ul class="nav col-12 col-lg-auto me-lg-auto mb-2 justify-content-center mb-md-0">
+                    <li><a href="#" class="nav-link px-2 link-body-emphasis">Rulebooks</a></li>
+                    <li><a href="#" class="nav-link px-2 link-body-emphasis">Miniatures</a></li>
+                    <li><a href="#" class="nav-link px-2 link-body-emphasis">Dice and Accessories</a></li>
+                    </ul>
+
+                    {% if current_user.is_authenticated %}
+                    <div class="dropdown text-end">
+                    <a href="#" class="d-block link-body-emphasis text-decoration-none dropdown-toggle" data-bs-toggle="dropdown" aria-expanded="false">{{current_user.username}}</a>
+                    <ul class="dropdown-menu text-small">
+                        {% if current_user.role=="admin" or current_user=="employee" %}
+                            {% if current_user.role=="admin" %}
+                            <li><a class="dropdown-item" href="{{ url_for('user_control_panel') }}">User control panel</a></li>
+                            {% endif %}
+                        <li><a class="dropdown-item" href="{{ url_for('product_control_panel') }}">Product control panel</a></li>
+                        {% endif %}
+                        {% if current_user.role=="user" %}
+                        <li><a class="dropdown-item" href="#">Shopping Cart</a></li>
+                        <li><a class="dropdown-item" href="#">User settings</a></li>
+                        <li><hr class="dropdown-divider"></li>
+                        <li><a class="dropdown-item" href="{{ url_for('logout') }}">Logout</a></li>
+                        {% endif %}
+                    </ul>
+                    </div>
+                    {% else %}
+                    <a href="{{ url_for('login') }}" class="nav-link px-2 link-body-emphasis">Login</a>
+                    <a href="{{ url_for('register') }}" class="nav-link px-2 link-body-emphasis">Register</a>
+                    {% endif %}
+                </div>
+            </div>
         </header>
