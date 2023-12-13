@@ -35,10 +35,10 @@
                         {% endif %}
                         {% if current_user.role=="user" %}
                         <li><a class="dropdown-item" href="#">Shopping Cart</a></li>
-                        <li><a class="dropdown-item" href="#">User settings</a></li>
+                        <li><a class="dropdown-item" href="{{ url_for('show_user_details', user_id=current_user.id) }}">User settings</a></li>
+                        {% endif %}
                         <li><hr class="dropdown-divider"></li>
                         <li><a class="dropdown-item" href="{{ url_for('logout') }}">Logout</a></li>
-                        {% endif %}
                     </ul>
                     </div>
                     {% else %}

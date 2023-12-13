@@ -1,6 +1,6 @@
 import datetime as dt
 from flask_wtf import FlaskForm
-from flask_wtf.file import FileField, FileAllowed, FileRequired
+from flask_wtf.file import FileField, FileAllowed
 from wtforms import (
     DecimalField,
     HiddenField,
@@ -11,10 +11,10 @@ from wtforms import (
     SelectField,
     BooleanField,
     SubmitField,
-    TextAreaField
+    TextAreaField,
+    FormField
 )
 from wtforms.validators import DataRequired, Email, Length, Regexp, NumberRange
-from flask_ckeditor import CKEditorField
 
 # User/Customer forms
 
@@ -67,12 +67,13 @@ class CustomerDetailsForm(FlaskForm):
     last_name = StringField("Last name", validators=[DataRequired()])
     date_of_birth = DateField("Date of birth", validators=[DataRequired()])
     phone_code = SelectField(
-        "Country code", choices=[], validators=[DataRequired()]
+        "Country code", choices=["+65"], validators=[DataRequired()]
     )
+    # , Regexp("[0-9]{7,15}")
     phone_number = StringField(
-        "Phone number", validators=[DataRequired(), Regexp("[0-9]{7,15}")]
+        "Phone number", validators=[DataRequired()]
     )
-    submit = SubmitField("Save details")
+    # submit = SubmitField("Save details")
 
 
 class UserForm(FlaskForm):
@@ -91,6 +92,7 @@ class UserRegistrationForm(UserForm):
         "Repeat password", validators=[DataRequired()]
     )
     username = StringField("Username", validators=[DataRequired()])
+    details = FormField(CustomerDetailsForm)
     submit = SubmitField("Register")
 
 

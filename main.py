@@ -2,7 +2,7 @@ import smtplib
 import jwt
 import datetime as dt
 from flask_login import LoginManager, current_user, login_user, logout_user
-from models import db, Product, Comment, User, ResetTokens
+from models import CustomerDetails, db, Product, Comment, User, ResetTokens
 from flask import (
     Flask,
     flash,
@@ -207,8 +207,9 @@ def delete_product(product_id):
 @app.route("/user/<int:user_id>")
 def show_user_details(user_id):
     # TODO get id, check logged in or admin
+    selected_user = db.get_or_404(User, user_id)
     # TODO render details and all addresses
-    return user_id
+    return jsonify({"user": selected_user.username, "first_name": selected_user.customerDetails.first_name})
 
 
 @app.route("/edit-user/<int:user_id>")
@@ -294,30 +295,46 @@ def logout():
 
 @app.route("/users/register", methods=["GET", "POST"])
 def register():
-    registerform = UserRegistrationForm()
+    # usage of csrf_enabled https://stackoverflow.com/questions/38231010/generating-a-csrf-token-manually-with-flask-wtf-forms
+    registerform = UserRegistrationForm(csrf_enabled=True)
     if registerform.validate_on_submit():
-        if (
-            db.session.execute(
-                db.select(User).where(User.email == registerform.email.data)
-            ).scalar()
-            is not None
-        ):
-            flash("User email already exists, login using it")
-            return redirect((url_for("login")))
         if registerform.password.data == registerform.repeat_password.data:
+            if (
+                db.session.execute(
+                    db.select(User).where(
+                        User.email == registerform.email.data
+                    )
+                ).scalar()
+                is not None
+            ):
+                flash("User email already exists, login using it")
+                return redirect((url_for("login")))
+
             hashed_pw = generate_password_hash(registerform.password.data)
+            new_details = CustomerDetails(
+                first_name=registerform.details.first_name.data,
+                last_name=registerform.details.last_name.data,
+                date_of_birth=registerform.details.date_of_birth.data,
+                phone_number=registerform.details.phone_code.data
+                + registerform.details.phone_number.data,
+            )
             new_user = User(
                 username=registerform.username.data,
                 email=registerform.email.data,
                 password=hashed_pw,
                 role="user",
+                customerDetails=new_details,
             )
+            db.session.add(new_details)
             db.session.add(new_user)
             db.session.commit()
             login_user(new_user)
             return redirect(url_for("home"))
         else:
-            pass
+            print("don't be here")
+            flash("Passwords do not match")
+            return redirect(url_for("home"))
+
     return render_template(
         "register.html", form=registerform, current_user=current_user
     )
