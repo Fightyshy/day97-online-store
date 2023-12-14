@@ -13,6 +13,7 @@ from flask import (
     url_for,
 )
 from forms import (
+    AddressForm,
     CommentForm,
     ProductForm,
     ProductStockForm,
@@ -206,10 +207,16 @@ def delete_product(product_id):
 
 @app.route("/user/<int:user_id>")
 def show_user_details(user_id):
-    # TODO get id, check logged in or admin
+    # get id, check logged in or admin
     selected_user = db.get_or_404(User, user_id)
-    # TODO render details and all addresses
-    return jsonify({"user": selected_user.username, "first_name": selected_user.customerDetails.first_name})
+    addressform = AddressForm(request.form)
+    # render details and all addresses
+    return render_template(
+        "user-page.html",
+        user=selected_user,
+        current_user=current_user,
+        form=addressform
+    )
 
 
 @app.route("/edit-user/<int:user_id>")

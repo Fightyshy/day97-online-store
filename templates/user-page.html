@@ -1,0 +1,187 @@
+{% include "header.html" %}
+<div class="card mb-4">
+    <div class="card-body text-center">
+        <div class="row">
+            <div class="col-sm-3">
+                <p class="mb-0">Full Name</p>
+            </div>
+            <div class="col-sm-9">
+                <p class="text-muted mb-0">{{user.customerDetails.first_name.title()}} {{user.customerDetails.last_name.title()}}</p>
+            </div>
+        </div>
+        <hr>
+        <div class="row">
+            <div class="col-sm-3">
+                <p class="mb-0">Email</p>
+            </div>
+            <div class="col-sm-9">
+                <p class="text-muted mb-0">{{user.email}}</p>
+            </div>
+        </div>
+        <hr>
+        <div class="row">
+            <div class="col-sm-3">
+                <p class="mb-0">Date of Birth</p>
+            </div>
+            <div class="col-sm-9">
+                <p class="text-muted mb-0">{{user.customerDetails.date_of_birth}}</p>
+            </div>
+        </div>
+        <hr>
+        <div class="row">
+            <div class="col-sm-3">
+                <p class="mb-0">Phone Number</p>
+            </div>
+            <div class="col-sm-9">
+                <p class="text-muted mb-0">{{user.customerDetails.phone_number}}</p>
+            </div>
+        </div>
+        <hr>
+    </div>
+</div>
+<div class="d-flex flex-column flex-md-row p-4 gap-4 py-md-5 align-items-center justify-content-center">
+    <main class="w-100 m-auto">
+    <button id="add-user-address" class="btn btn-primary w-100 my-3 py-2" data-bs-toggle="modal" data-bs-target="#add-address-modal">Add new address</button>
+    {% if user.customerDetails.addresses|length != 0 %}
+    <div class="accordion" id="accordionExample">
+      {% for address in user.customerDetails.addresses %}
+        <div class="accordion-item">
+          <h2 class="accordion-header">
+            <button class="accordion-button" type="button" data-bs-toggle="collapse" data-bs-target="#collapseOne" aria-expanded="false" aria-controls="collapseOne">
+              <address>
+                {{address.address_one}}<br>
+                {{address.address_two}}<br>
+                {{address.city}}<br>
+                {{address.country}}<br>
+              </address>
+            </button>
+          </h2>
+          <div id="collapseOne" class="accordion-collapse collapse show" data-bs-parent="#accordionExample">
+            <div class="accordion-body">
+              <strong>This is the first item's accordion body.</strong> It is shown by default, until the collapse plugin adds the appropriate classes that we use to style each element. These classes control the overall appearance, as well as the showing and hiding via CSS transitions. You can modify any of this with custom CSS or overriding our default variables. It's also worth noting that just about any HTML can go within the <code>.accordion-body</code>, though the transition does limit overflow.
+              <button id="edit-user-address-{{address.id}}" class="btn btn-primary w-100" data-bs-toggle="modal" data-bs-target="#edit-address-modal-{{address.id}}">Edit address</button>
+            </div>
+          </div>
+        </div>
+        <!-- Edit modal -->
+        <div class="modal fade" id="edit-address-modal-{{address.id}}" tabindex="-1" aria-labelledby="add-address-modal-label-{{addres.id}}" aria-hidden="true">
+          <div class="modal-dialog">
+            <div class="modal-content">
+              <div class="modal-header">
+                <h1 class="modal-title fs-5" id="add-address-modal-label-{{address.id}}">Add address</h1>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+              </div>
+              <form id="add-address-{{address.id}}" action="{{url_for('add_address', user_id=user.id)}}" method="post">
+                <div class="modal-body">
+                  <div class="mb-3">
+                      {{form.address_one.label}}
+                      {{form.address_one(class="form-control")}}
+                  </div>
+                  <div class="mb-3">
+                      {{form.address_two.label}}
+                      {{form.address_two(class="form-control")}}
+                  </div>
+                  <div class="mb-3">
+                      {{form.country.label}}
+                      {{form.country(class="form-control")}}
+                  </div>
+                  <div class="mb-3">
+                      {{form.state.label}}
+                      {{form.state(class="form-control")}}
+                  </div>
+                  <div class="mb-3">
+                      {{form.city.label}}
+                      {{form.city(class="form-control")}}
+                  </div>
+                  <div class="mb-3">
+                      {{form.postal_code.label}}
+                      {{form.postal_code(class="form-control")}}
+                  </div>
+                  <div class="mb-3">
+                      {{form.same_number}}
+                      {{form.same_number.label}}
+                  </div>
+                  <div class="mb-3">
+                      {{form.phone_code.label}}
+                      {{form.phone_code(class="form-control")}}
+                  </div>
+                  <div class="mb-3">
+                      {{form.phone_number.label}}
+                      {{form.phone_number(class="form-control")}}
+                  </div>
+                </div>
+                <div class="modal-footer">
+                  <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                  {{ form.submit(class="btn btn-primary") }}
+                </div>
+              </form>
+            </div>
+          </div>
+        </div>
+        {% endfor %}
+    </div>
+    {% else %}
+    <h1 class="h3 text-center">You have not saved any addresses</h1>
+    <h1 class="h3 text-center">Please add one using the button above or when promted before checkout</h1>
+    {% endif %}
+    </main>
+    <div class="modal fade" id="add-address-modal" tabindex="-1" aria-labelledby="add-address-modal-label" aria-hidden="true">
+        <div class="modal-dialog">
+          <div class="modal-content">
+            <div class="modal-header">
+              <h1 class="modal-title fs-5" id="add-address-modal-label">Add address</h1>
+              <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <form id="add-address" action="{{url_for('add_address', user_id=user.id)}}" method="post">
+              <div class="modal-body">
+                <div class="mb-3">
+                    {{form.address_one.label}}
+                    {{form.address_one(class="form-control")}}
+                </div>
+                <div class="mb-3">
+                    {{form.address_two.label}}
+                    {{form.address_two(class="form-control")}}
+                </div>
+                <div class="mb-3">
+                    {{form.country.label}}
+                    {{form.country(class="form-control")}}
+                </div>
+                <div class="mb-3">
+                    {{form.state.label}}
+                    {{form.state(class="form-control")}}
+                </div>
+                <div class="mb-3">
+                    {{form.city.label}}
+                    {{form.city(class="form-control")}}
+                </div>
+                <div class="mb-3">
+                    {{form.postal_code.label}}
+                    {{form.postal_code(class="form-control")}}
+                </div>
+                <div class="mb-3">
+                    {{form.same_number}}
+                    {{form.same_number.label}}
+                </div>
+                <div class="mb-3">
+                    {{form.phone_code.label}}
+                    {{form.phone_code(class="form-control")}}
+                </div>
+                <div class="mb-3">
+                    {{form.phone_number.label}}
+                    {{form.phone_number(class="form-control")}}
+                </div>
+              </div>
+              <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                {{ form.submit(class="btn btn-primary") }}
+              </div>
+            </form>
+          </div>
+        </div>
+      </div>
+</div>
+<!-- TODO add address modal -->
+<script type="text/javascript">
+    
+</script>
+{% include "footer.html" %}
