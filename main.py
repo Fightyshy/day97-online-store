@@ -407,8 +407,7 @@ def register():
                 first_name=registerform.details.first_name.data,
                 last_name=registerform.details.last_name.data,
                 date_of_birth=registerform.details.date_of_birth.data,
-                phone_number=registerform.details.phone_code.data
-                + registerform.details.phone_number.data,
+                phone_number=f"{registerform.details.phone_code.data} {registerform.details.phone_number.data}",
             )
             new_user = User(
                 username=registerform.username.data,
