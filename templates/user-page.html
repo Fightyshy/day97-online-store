@@ -43,12 +43,12 @@
     <main class="w-100 m-auto">
     <button id="add-user-address" class="btn btn-primary w-100 my-3 py-2" data-bs-toggle="modal" data-bs-target="#add-address-modal">Add new address</button>
     {% if user.customerDetails.addresses|length != 0 %}
-    <div class="accordion" id="accordionExample">
+    <div class="accordion" id="address-accordion">
       {% for address in user.customerDetails.addresses %}
         <div class="accordion-item">
           <h2 class="accordion-header">
-            <button class="accordion-button" type="button" data-bs-toggle="collapse" data-bs-target="#collapseOne" aria-expanded="false" aria-controls="collapseOne">
-              <address>
+            <button class="accordion-button" type="button" data-bs-toggle="collapse" data-bs-target="#address-collapse-{{address.id}}" aria-expanded="false" aria-controls="#address-collapse-{{address.id}}">
+              <address id="address-{{address.id}}">
                 {{address.address_one}}<br>
                 {{address.address_two}}<br>
                 {{address.city}}<br>
@@ -56,7 +56,7 @@
               </address>
             </button>
           </h2>
-          <div id="collapseOne" class="accordion-collapse collapse show" data-bs-parent="#accordionExample">
+          <div id="address-collapse-{{address.id}}" class="accordion-collapse collapse show" data-bs-parent="#address-accordion">
             <div class="accordion-body">
               <strong>This is the first item's accordion body.</strong> It is shown by default, until the collapse plugin adds the appropriate classes that we use to style each element. These classes control the overall appearance, as well as the showing and hiding via CSS transitions. You can modify any of this with custom CSS or overriding our default variables. It's also worth noting that just about any HTML can go within the <code>.accordion-body</code>, though the transition does limit overflow.
               <button id="edit-user-address-{{address.id}}" class="btn btn-primary w-100" data-bs-toggle="modal" data-bs-target="#edit-address-modal-{{address.id}}">Edit address</button>
@@ -64,7 +64,7 @@
           </div>
         </div>
         <!-- Edit modal -->
-        <div class="modal fade" id="edit-address-modal-{{address.id}}" tabindex="-1" aria-labelledby="add-address-modal-label-{{addres.id}}" aria-hidden="true">
+        <div class="modal fade" id="edit-address-modal-{{address.id}}" tabindex="-1" aria-labelledby="edit-address-modal-label-{{address.id}}" aria-hidden="true">
           <div class="modal-dialog">
             <div class="modal-content">
               <div class="modal-header">
@@ -122,7 +122,7 @@
     </div>
     {% else %}
     <h1 class="h3 text-center">You have not saved any addresses</h1>
-    <h1 class="h3 text-center">Please add one using the button above or when promted before checkout</h1>
+    <h1 class="h3 text-center">Please add one us
     {% endif %}
     </main>
     <div class="modal fade" id="add-address-modal" tabindex="-1" aria-labelledby="add-address-modal-label" aria-hidden="true">
@@ -132,7 +132,8 @@
               <h1 class="modal-title fs-5" id="add-address-modal-label">Add address</h1>
               <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
             </div>
-            <form id="add-address" action="{{url_for('add_address', user_id=user.id)}}" method="post">
+            <form id="add-address" action="{{url_for('add_address')}}" method="post">
+              {{form.csrf_token}}
               <div class="modal-body">
                 <div class="mb-3">
                     {{form.address_one.label}}
@@ -180,8 +181,38 @@
         </div>
       </div>
 </div>
-<!-- TODO add address modal -->
+<!-- TODO scripts for post/ajax -->
 <script type="text/javascript">
-    
+    $("#add-address").submit(function(event){
+      event.preventDefault();
+      // https://stackoverflow.com/questions/6162573/jquery-form-serialize-returns-an-empty-string
+      // Can't be disabled to submit properly
+      if($("#phone_number").attr("disabled")){
+        $("#phone_number").removeAttr("disabled")
+        $("#phone_code").removeAttr("disabled")
+      }
+      $.post(
+        "{{url_for('add_address')}}",
+        $(this).serialize(),
+        function(data, status){
+          if(status){
+            alert("Address has been added")
+            location.reload()
+          }
+        }
+      )
+    })
+
+    $("#same_number").change((event)=>{
+      event.preventDefault();
+      // https://stackoverflow.com/questions/43446641/jquery-attribute-exists-or-not
+      if(!($("#phone_number").attr("disabled"))){
+        $("#phone_number").attr("disabled", true)
+        $("#phone_code").attr("disabled", true)
+      }else{
+        $("#phone_number").removeAttr("disabled")
+        $("#phone_code").removeAttr("disabled")
+      }
+    })
 </script>
 {% include "footer.html" %}

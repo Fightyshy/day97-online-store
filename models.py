@@ -67,6 +67,7 @@ class Address(db.Model):
     city: Mapped[str] = mapped_column(String)
     postcode: Mapped[str] = mapped_column(String)
     country: Mapped[str] = mapped_column(String)
+    phone_number: Mapped[int] = mapped_column(String)
 
     customer_id: Mapped[int] = mapped_column(ForeignKey("customers.id"))
     customer: Mapped["CustomerDetails"] = relationship(

@@ -2,7 +2,15 @@ import smtplib
 import jwt
 import datetime as dt
 from flask_login import LoginManager, current_user, login_user, logout_user
-from models import CustomerDetails, db, Product, Comment, User, ResetTokens
+from models import (
+    Address,
+    CustomerDetails,
+    db,
+    Product,
+    Comment,
+    User,
+    ResetTokens,
+)
 from flask import (
     Flask,
     flash,
@@ -204,18 +212,18 @@ def delete_product(product_id):
 
 # user handling endpoints
 
-
-@app.route("/user/<int:user_id>")
-def show_user_details(user_id):
+# TODO auth wrapper
+@app.route("/user/")
+def show_user_details():
     # get id, check logged in or admin
-    selected_user = db.get_or_404(User, user_id)
-    addressform = AddressForm(request.form)
+    selected_user = db.get_or_404(User, current_user.id)
+    addressform = AddressForm(request.form, csrf_enabled=True)
     # render details and all addresses
     return render_template(
         "user-page.html",
         user=selected_user,
         current_user=current_user,
-        form=addressform
+        form=addressform,
     )
 
 
@@ -226,10 +234,43 @@ def edit_user_details(user_id):
     # TODO validate and submit changes to server
     return user_id
 
+# TODO auth wrapper
+@app.route("/user/add-address", methods=["POST"])
+def add_address():
+    print(request.form)
+    addressform = AddressForm(request.form)
+    print(addressform.data)
+    print(addressform.validate_on_submit())
+    print(addressform.errors)
+    # form validate and commit to db under address
+    if addressform.validate_on_submit():
+        print(current_user.id)
+        # Get user
+        selected_user = db.get_or_404(User, current_user.id)
 
-@app.route("/user/<int:user_id>/add-address")
-def add_address(user_id):
-    # TODO form validate and commit to db under address
+        # check to see if same of diff number
+        phone_number = (
+            selected_user.customerDetails.phone_number
+            if addressform.same_number.data
+            == selected_user.customerDetails.phone_number
+            else addressform.phone_code.data + " " + addressform.phone_number.data
+        )
+
+        # Make new address obj
+        new_address = Address(
+            address_one=addressform.address_one.data,
+            address_two=addressform.address_two.data,
+            state=addressform.state.data,
+            city=addressform.city.data,
+            postcode=addressform.postal_code.data,
+            country=addressform.country.data,
+            phone_number=phone_number,
+            customer=selected_user.customerDetails
+        )
+        # Update customerDetails address with address
+        selected_user.customerDetails.addresses.append(new_address)
+        db.session.commit()
+        return ""
     return "form for adding new address"
 
 
