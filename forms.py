@@ -1,4 +1,5 @@
 import datetime as dt
+import json
 from flask_wtf import FlaskForm
 from flask_wtf.file import FileField, FileAllowed
 from wtforms import (
@@ -12,9 +13,13 @@ from wtforms import (
     BooleanField,
     SubmitField,
     TextAreaField,
-    FormField
+    FormField,
 )
 from wtforms.validators import DataRequired, Email, Length, Regexp, NumberRange
+
+with open("assets/json/phone.json") as phone:
+    data = json.load(phone)
+
 
 # User/Customer forms
 
@@ -25,22 +30,25 @@ class AddressForm(FlaskForm):
 
     address_one = StringField("Line one", validators=[DataRequired()])
     address_two = StringField("Line two")
-    state = StringField("State/Province", validators=[DataRequired()])
+    state = StringField("State/Province")
     city = StringField("City", validators=[DataRequired()])
     postal_code = StringField(
         "Postal Code", validators=[DataRequired(), Length(min=5)]
     )
-    country = SelectField("Country", choices=[], validators=[DataRequired()])
+    country = SelectField(
+        "Country",
+        choices=[key for key in data.keys()],
+        validators=[DataRequired()],
+    )
     same_number = BooleanField(
         "Phone number is same as in details",
-        validators=[DataRequired()],
         default=False,
     )
     phone_code = SelectField(
-        "Country code", choices=[], validators=[DataRequired()]
+        "Country code", choices=[code for key, code in data.items()]
     )
     phone_number = StringField(
-        "Phone number", validators=[Regexp("[0-9]{7,15}")]
+        "Phone number", validators=[Regexp("^\d{7,15}|$")]
     )
 
     submit = SubmitField("Save address")
@@ -67,12 +75,10 @@ class CustomerDetailsForm(FlaskForm):
     last_name = StringField("Last name", validators=[DataRequired()])
     date_of_birth = DateField("Date of birth", validators=[DataRequired()])
     phone_code = SelectField(
-        "Country code", choices=["+65"], validators=[DataRequired()]
+        "Country code", choices=[code for key, code in data.items()], validators=[DataRequired()]
     )
     # , Regexp("[0-9]{7,15}")
-    phone_number = StringField(
-        "Phone number", validators=[DataRequired()]
-    )
+    phone_number = StringField("Phone number", validators=[DataRequired(), Regexp("\d{7,15}|$")])
     # submit = SubmitField("Save details")
 
 
@@ -133,15 +139,24 @@ class ProductForm(FlaskForm):
     )
     # Upload from user's pc to server, save in same root as loc under assets/images
     # jpgs or pngs only, transform image to equiv 200x200px?
-    image = FileField(
-        "Image", validators=[FileAllowed(["jpg", "png"])]
+    image = FileField("Image", validators=[FileAllowed(["jpg", "png"])])
+    category = SelectField(
+        "Category",
+        choices=[
+            "Wargame Rulebooks",
+            "Miniatures",
+            "Dice",
+            "Accessories",
+            "Roleplaying Rulebooks",
+        ],
+        validators=[DataRequired()],
     )
-    category = SelectField("Category", choices=["Wargame Rulebooks", "Miniatures", "Dice", "Accessories", "Roleplaying Rulebooks"], validators=[DataRequired()])
     submit = SubmitField("Save product")
 
 
 class ProductStockForm(FlaskForm):
     """For editting product stock levels"""
+
     stock = IntegerField(
         "Quantity in stock", validators=[DataRequired(), NumberRange(min=1)]
     )
