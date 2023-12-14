@@ -239,11 +239,8 @@ def edit_user_details(user_id):
 # TODO auth wrapper
 @app.route("/user/add-address", methods=["POST"])
 def add_address():
-    print(request.form)
     addressform = AddressForm(request.form)
-    print(addressform.data)
     print(addressform.validate_on_submit())
-    print(addressform.errors)
     # form validate and commit to db under address
     if addressform.validate_on_submit():
         print(current_user.id)
@@ -253,11 +250,8 @@ def add_address():
         # check to see if same of diff number
         phone_number = (
             selected_user.customerDetails.phone_number
-            if addressform.same_number.data
-            == selected_user.customerDetails.phone_number
-            else addressform.phone_code.data
-            + " "
-            + addressform.phone_number.data
+            if addressform.same_number.data is True
+            else f"{addressform.phone_code} {addressform.phone_number}"
         )
 
         # Make new address obj
