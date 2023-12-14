@@ -58,8 +58,9 @@
           </h2>
           <div id="address-collapse-{{address.id}}" class="accordion-collapse collapse show" data-bs-parent="#address-accordion">
             <div class="accordion-body">
-              <strong>This is the first item's accordion body.</strong> It is shown by default, until the collapse plugin adds the appropriate classes that we use to style each element. These classes control the overall appearance, as well as the showing and hiding via CSS transitions. You can modify any of this with custom CSS or overriding our default variables. It's also worth noting that just about any HTML can go within the <code>.accordion-body</code>, though the transition does limit overflow.
+              <p>{{address.phone_number}}</p>
               <button id="edit-user-address-{{address.id}}" class="btn btn-primary w-100" data-bs-toggle="modal" data-bs-target="#edit-address-modal-{{address.id}}">Edit address</button>
+              <a href="{{url_for('delete_address', address_id=address.id)}}" class="btn btn-danger w-100">Delete address</a>
             </div>
           </div>
         </div>
@@ -68,56 +69,91 @@
           <div class="modal-dialog">
             <div class="modal-content">
               <div class="modal-header">
-                <h1 class="modal-title fs-5" id="add-address-modal-label-{{address.id}}">Add address</h1>
+                <h1 class="modal-title fs-5" id="edit-address-modal-label-{{address.id}}">Add address</h1>
                 <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
               </div>
-              <form id="add-address-{{address.id}}" action="{{url_for('add_address', user_id=user.id)}}" method="post">
+              <form id="edit-address-{{address.id}}" action="{{url_for('edit_address', address_id=address.id)}}" method="post">
                 <div class="modal-body">
+                  {{form.csrf_token}}
                   <div class="mb-3">
-                      {{form.address_one.label}}
-                      {{form.address_one(class="form-control")}}
+                      {{form.address_one.label(for="edit-address_one-"+address.id|string)}}
+                      {{form.address_one(id="edit-address_one-"+address.id|string, class="form-control")}}
                   </div>
                   <div class="mb-3">
-                      {{form.address_two.label}}
-                      {{form.address_two(class="form-control")}}
+                      {{form.address_two.label(for="edit-address_two-"+address.id|string)}}
+                      {{form.address_two(id="edit-address_two-"+address.id|string, class="form-control")}}
                   </div>
                   <div class="mb-3">
-                      {{form.country.label}}
-                      {{form.country(class="form-control")}}
+                      {{form.country.label(for="edit-address_country"+address.id|string)}}
+                      {{form.country(id="edit-country-"+address.id|string, class="form-control")}}
                   </div>
                   <div class="mb-3">
-                      {{form.state.label}}
-                      {{form.state(class="form-control")}}
+                      {{form.state.label(for="edit-state-"+address.id|string)}}
+                      {{form.state(id="edit-state-"+address.id|string, class="form-control")}}
                   </div>
                   <div class="mb-3">
-                      {{form.city.label}}
-                      {{form.city(class="form-control")}}
+                      {{form.city.label(for="edit-city-"+address.id|string)}}
+                      {{form.city(id="edit-city-"+address.id|string, class="form-control")}}
                   </div>
                   <div class="mb-3">
-                      {{form.postal_code.label}}
-                      {{form.postal_code(class="form-control")}}
+                      {{form.postal_code.label(for="edit-postal_code-"+address.id|string)}}
+                      {{form.postal_code(id="edit-postal_code-"+address.id|string, class="form-control")}}
                   </div>
                   <div class="mb-3">
-                      {{form.same_number}}
-                      {{form.same_number.label}}
+                      {{form.same_number(id="edit-same_number-"+address.id|string)}}
+                      {{form.same_number.label(for="edit-same_number-"+address.id|string)}}
                   </div>
                   <div class="mb-3">
-                      {{form.phone_code.label}}
-                      {{form.phone_code(class="form-control")}}
+                      {{form.phone_code.label(for="edit-phone_code-"+address.id|string)}}
+                      {{form.phone_code(id="edit-phone_code-"+address.id|string, class="form-control")}}
                   </div>
                   <div class="mb-3">
-                      {{form.phone_number.label}}
-                      {{form.phone_number(class="form-control")}}
+                      {{form.phone_number.label(for="edit-phone_number-"+address.id|string)}}
+                      {{form.phone_number(id="edit-phone_number-"+address.id|string, class="form-control")}}
                   </div>
                 </div>
                 <div class="modal-footer">
                   <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
-                  {{ form.submit(class="btn btn-primary") }}
+                  {{ form.submit(id="edit-address-submit-{{address.id}}", class="btn btn-primary") }}
                 </div>
               </form>
             </div>
           </div>
         </div>
+        <script type="text/javascript">
+          $("#edit-user-address-{{address.id}}").click(function(event){
+            event.preventDefault();
+
+            $.get(
+              "{{url_for('edit_address', address_id=address.id)}}",
+              {},
+              function(data){
+                $("#edit-address-modal-label-{{address.id}}").text("Edit address")
+                $("#edit-address_one-{{address.id}}").val(data.address.address_one)
+                $("#edit-address_two-{{address.id}}").val(data.address.address_two)
+                $("#edit-state-{{address.id}}").val(data.address.state)
+                $("#edit-city-{{address.id}}").val(data.address.city)
+                $("#edit-postal_code-{{address.id}}").val(data.address.postal_code)
+                $("#edit-country-{{address.id}}").val(data.address.country)
+                $("#edit-phone_code-{{address.id}}").val(data.address.phone_code)
+                $("#edit-phone_number-{{address.id}}").val(data.address.phone_number)
+              }
+            )
+          })
+          
+          $("#edit-address-{{address.id}}").submit(function(event){
+            event.preventDefault();
+
+            $.post(
+              $(this).attr("action"),
+              $(this).serialize(),
+              function(data){
+                location.reload()
+                alert("Address has been updated")
+              }
+            )
+          })
+        </script>
         {% endfor %}
     </div>
     {% else %}
