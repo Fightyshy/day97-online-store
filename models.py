@@ -88,7 +88,7 @@ class Comment(db.Model):
     __tablename__ = "comments"
     
     id: Mapped[int] = mapped_column(Integer, primary_key=True)
-    text: Mapped[str] = mapped_column(String(length=500), nullable=False)
+    comment: Mapped[str] = mapped_column(String(length=500), nullable=False)
     rating: Mapped[int] = mapped_column(Integer, nullable=False, default=0)  # Either do total calc in flask or save to db.
 
     customer_id: Mapped[int] = mapped_column(ForeignKey("customers.id"))

@@ -46,13 +46,14 @@ SENDER_PASSWORD = "dyuqvhdfhrexshoa"
 app = Flask(__name__)
 app.config["SECRET_KEY"] = "8BYkEfBA6O6donzWlSihBXox7C0sKR6b"  # csrf
 app.config["SQLALCHEMY_DATABASE_URI"] = "sqlite:///store.db"
+
 Bootstrap5(app)
 CKEditor(app)
 db.init_app(app)
 
 # sqlite db, will convert to local postgres db and dump creation script
-with app.app_context():
-    db.create_all()
+# with app.app_context():
+#     db.create_all()
 
 login_manager = LoginManager()
 login_manager.init_app(app)
@@ -61,6 +62,37 @@ login_manager.init_app(app)
 @login_manager.user_loader
 def load_user(user_id):
     return db.get_or_404(User, user_id)
+
+# auth decorators
+def logged_in_check(f):
+    """Checks if a user is logged in, renders error page with a 403 error if not"""
+    @wraps(f)
+    def dec_func(*args, **kwargs):
+        if current_user.is_authenticated():
+            return f(*args, **kwargs)
+        else:
+            return render_template("error.html", status=403)
+    return dec_func
+
+def employee_check(f):
+    """Checks if the current user is a admin or employee, renders error page with a 403 error if not"""
+    @wraps(f)
+    def dec_func(*args, **kwargs):
+        if current_user.is_authenticated() and (current_user.role == "admin" or "employee"):
+            return f(*args, **kwargs)
+        else:
+            return render_template("error.html", status=403)
+    return dec_func
+
+def admin_check(f):
+    """Checks if current user is a admin, renders error page with a 403 error if not"""
+    @wraps(f)
+    def dec_func(*args, **kwargs):
+        if current_user.is_authenticated() and (current_user.role == "admin"):
+            return f(*args, **kwargs)
+        else:
+            return render_template("error.html", status=403)
+    return dec_func
 
 
 # product handling
@@ -86,26 +118,35 @@ def home():
 
 # Retail store endpoints
 # GET only
-@app.route("/products/<int:product_id>")
+@app.route("/products/<int:product_id>", methods=["GET", "POST"])
 def show_product(product_id):
     shown_product = db.get_or_404(Product, product_id)
-    comment = CommentForm()
-    if comment.validate_on_submit():
-        rating_val = len(comment.rating.data)
+    commentform = CommentForm()
+    if commentform.validate_on_submit():
+        selected_user = db.get_or_404(User, current_user.id)
+        rating_val = len(commentform.rating.data)
         new_comment = Comment(
-            text=comment.text.data,
+            comment=commentform.comment.data,
             rating=rating_val,
-            product=show_product,
-            author=current_user,
+            product=shown_product,
+            customer=selected_user.customerDetails
         )
         db.session.add(new_comment)
         db.session.commit()
     return render_template(
-        "placeholder",
-        form=comment,
+        "product-detail.html",
+        form=commentform,
         product=shown_product,
-        product_id=product_id,
+        product_id=product_id
     )
+
+@employee_check
+@app.route("/products/delete-comment/<int:comment_id>")
+def delete_comment(comment_id):
+    selected_comment = db.get_or_404(Comment, comment_id)
+    db.session.delete(selected_comment)
+    db.session.commit()
+    return redirect(url_for("show_product", product_id=selected_comment.product_id))
 
 
 @app.route("/products/control-panel", methods=["GET", "POST"])
@@ -151,6 +192,7 @@ def product_control_panel():
     )
 
 
+@employee_check
 @app.route("/products/edit-stock/<int:product_id>", methods=["GET", "POST"])
 def edit_product_stock(product_id):
     selected_product = db.get_or_404(Product, product_id)
@@ -163,6 +205,7 @@ def edit_product_stock(product_id):
     return jsonify({"product": {"stock": selected_product.stock}})
 
 
+@employee_check
 @app.route("/products/edit-product/<int:product_id>", methods=["GET", "POST"])
 def edit_product(product_id):
     # get product from db
@@ -202,7 +245,7 @@ def edit_product(product_id):
     )
     return payload
 
-
+@admin_check
 @app.route("/products/delete-product/<int:product_id>")
 def delete_product(product_id):
     selected_product = db.get_or_404(Product, product_id)
@@ -214,7 +257,7 @@ def delete_product(product_id):
 # user handling endpoints
 
 
-# TODO auth wrapper
+@logged_in_check
 @app.route("/user")
 def show_user_details():
     # get id, check logged in or admin
@@ -230,7 +273,7 @@ def show_user_details():
         detailform=customerdetailsform,
     )
 
-
+@logged_in_check
 @app.route("/edit-user", methods=["GET", "POST"])
 def edit_user_details():
     # get user, checked if logged in or admin
@@ -273,7 +316,7 @@ def edit_user_details():
         )
 
 
-# TODO auth wrapper
+@logged_in_check
 @app.route("/user/add-address", methods=["POST"])
 def add_address():
     addressform = AddressForm(request.form)
@@ -309,7 +352,7 @@ def add_address():
     return "form for adding new address"
 
 
-# TODO auth wrapper
+@logged_in_check
 @app.route("/user/edit-address/<int:address_id>", methods=["GET", "POST"])
 def edit_address(address_id):
     # get address from address id, check if user id matches logged in user
@@ -347,7 +390,7 @@ def edit_address(address_id):
             }
         )
 
-
+@logged_in_check
 @app.route("/user/delete-address/<int:address_id>")
 def delete_address(address_id):
     selected_address = db.get_or_404(Address, address_id)
@@ -355,7 +398,9 @@ def delete_address(address_id):
     db.session.commit()
     return redirect(url_for("show_user_details"))
 
+# admin/employee control panel handling
 
+@employee_check
 @app.route("/users/control-panel", methods=["GET", "POST"])
 def user_control_panel():
     # get all users
@@ -364,7 +409,7 @@ def user_control_panel():
 
     return render_template("user-control.html", users=user_list, form=roleform)
 
-
+@admin_check
 @app.route("/users/delete-user/<int:user_id>")
 def delete_user(user_id):
     selected_user = db.get_or_404(User, user_id)
@@ -372,7 +417,7 @@ def delete_user(user_id):
     db.session.commit()
     return redirect(url_for("user_control_panel"))
 
-
+@admin_check
 @app.route("/users/edit-role/<int:user_id>", methods=["POST"])
 def edit_role(user_id):
     # handle AJAX
@@ -387,6 +432,7 @@ def edit_role(user_id):
     # AJAX no redirect/render
     return ""
 
+# User registration and password reset endpoints
 
 @app.route("/users/login", methods=["GET", "POST"])
 def login():

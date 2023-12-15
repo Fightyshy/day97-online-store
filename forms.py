@@ -166,17 +166,7 @@ class ProductStockForm(FlaskForm):
 class CommentForm(FlaskForm):
     """Add customer's comment and rating of a product form"""
 
-    text = StringField(
-        "Comment",
-        validators=[
-            DataRequired(),
-            Length(
-                1,
-                500,
-                message="Please keep your comment within 500 characters",
-            ),
-        ],
-    )
+    comment = TextAreaField(label="Comment", validators=[DataRequired()])
     rating = SelectField(
         "Rating",
         choices=["★", "★★", "★★★", "★★★★", "★★★★★"],
