@@ -16,7 +16,7 @@
                     {% if product.stock==0 %}
                     <span>Out of stock</span>
                     {% else %}
-                    <input class="form-control text-center me-3" id="inputQuantity" type="num" value="1" style="max-width: 3rem">
+                    <input class="form-control text-center me-3" id="inputQuantity" type="number" min="1" max="{{(product.stock*0.05)|round|int}}" value="1" style="max-width: 10rem">
                     <button id="add-to-cart" name="add-to-cart" class="btn btn-outline-dark flex-shrink-0" type="button">
                         <i class="bi-cart-fill me-1"></i>
                         Add to cart
@@ -80,10 +80,24 @@
 </section>
 {% endif %}
 <script type="text/javascript">
-    $("#add-to-cart").click((event)=>{
+    $("#add-to-cart").click(function(event){
         event.preventDefault();
-        let quant = $("#inputQuantity")
-        // TODO add to cart endpoint
+        let quant = $("#inputQuantity").val()
+        
+        if(quant>0 && quant<=parseInt("{{(product.stock*0.05)|round|int}}")){
+            $.ajax({
+                data:JSON.stringify({
+                    "product_uid":"{{product.product_uid}}",
+                    "quantity":quant
+                }),
+                url:"{{url_for('add_to_cart')}}",
+                type:"POST",
+                contentType:"application/json",
+                accepts:"application/json"
+            }).done(function(data){
+                alert(`Added ${quant} of the current product to cart!`);
+            })
+        }
     })
 </script>
 {% include "footer.html" %}

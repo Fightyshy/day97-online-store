@@ -6,6 +6,7 @@ from flask_login import LoginManager, current_user, login_user, logout_user
 from models import (
     Address,
     CustomerDetails,
+    ShoppingCart,
     db,
     Product,
     Comment,
@@ -37,7 +38,7 @@ from sqlalchemy import func
 from werkzeug.security import generate_password_hash, check_password_hash
 from flask_bootstrap import Bootstrap5
 from helper_funcs import generate_list_id
-from flask_ckeditor import CKEditor
+from sqlalchemy import and_
 
 # consts
 # Temp email consts
@@ -49,7 +50,6 @@ app.config["SECRET_KEY"] = "8BYkEfBA6O6donzWlSihBXox7C0sKR6b"  # csrf
 app.config["SQLALCHEMY_DATABASE_URI"] = "sqlite:///store.db"
 
 Bootstrap5(app)
-CKEditor(app)
 db.init_app(app)
 
 # sqlite db, will convert to local postgres db and dump creation script
@@ -64,35 +64,46 @@ login_manager.init_app(app)
 def load_user(user_id):
     return db.get_or_404(User, user_id)
 
+
 # auth decorators
 def logged_in_check(f):
     """Checks if a user is logged in, renders error page with a 403 error if not"""
+
     @wraps(f)
     def dec_func(*args, **kwargs):
         if current_user.is_authenticated():
             return f(*args, **kwargs)
         else:
             return render_template("error.html", status=403)
+
     return dec_func
+
 
 def employee_check(f):
     """Checks if the current user is a admin or employee, renders error page with a 403 error if not"""
+
     @wraps(f)
     def dec_func(*args, **kwargs):
-        if current_user.is_authenticated() and (current_user.role == "admin" or "employee"):
+        if current_user.is_authenticated() and (
+            current_user.role == "admin" or "employee"
+        ):
             return f(*args, **kwargs)
         else:
             return render_template("error.html", status=403)
+
     return dec_func
+
 
 def admin_check(f):
     """Checks if current user is a admin, renders error page with a 403 error if not"""
+
     @wraps(f)
     def dec_func(*args, **kwargs):
         if current_user.is_authenticated() and (current_user.role == "admin"):
             return f(*args, **kwargs)
         else:
             return render_template("error.html", status=403)
+
     return dec_func
 
 
@@ -130,7 +141,7 @@ def show_product(product_id):
             comment=commentform.comment.data,
             rating=rating_val,
             product=shown_product,
-            customer=selected_user.customerDetails
+            customer=selected_user.customerDetails,
         )
         db.session.add(new_comment)
         db.session.commit()
@@ -138,8 +149,9 @@ def show_product(product_id):
         "product-detail.html",
         form=commentform,
         product=shown_product,
-        product_id=product_id
+        product_id=product_id,
     )
+
 
 @employee_check
 @app.route("/products/delete-comment/<int:comment_id>")
@@ -147,7 +159,9 @@ def delete_comment(comment_id):
     selected_comment = db.get_or_404(Comment, comment_id)
     db.session.delete(selected_comment)
     db.session.commit()
-    return redirect(url_for("show_product", product_id=selected_comment.product_id))
+    return redirect(
+        url_for("show_product", product_id=selected_comment.product_id)
+    )
 
 
 @app.route("/products/control-panel", methods=["GET", "POST"])
@@ -246,6 +260,7 @@ def edit_product(product_id):
     )
     return payload
 
+
 @admin_check
 @app.route("/products/delete-product/<int:product_id>")
 def delete_product(product_id):
@@ -254,11 +269,48 @@ def delete_product(product_id):
     db.session.commit()
     return redirect(url_for("product_control_panel"))
 
+
+# shopping cart handling
+
+
 @logged_in_check
 @app.route("/user/shopping-cart")
 def show_shopping_cart():
-    selected_user_cart = db.get_or_404(User, current_user.id).customerDetails.shoppingcart
-    return render_template("shopping-cart.html", cart=selected_user_cart, current_user=current_user)
+    selected_user_cart = db.get_or_404(
+        User, current_user.id
+    ).customerDetails.shoppingcart
+    return render_template(
+        "shopping-cart.html",
+        cart=selected_user_cart,
+        current_user=current_user,
+    )
+
+
+@app.route("/products/add-to-cart", methods=["POST"])
+def add_to_cart():
+    if request.method == "POST":
+        # for directly retrieving json
+        # https://stackoverflow.com/questions/10434599/get-the-data-received-in-a-flask-request
+        get_user = db.get_or_404(User, current_user.id)
+        check_exist = db.session.execute(
+            db.select(ShoppingCart).where(
+                ShoppingCart.customer_id == get_user.customerDetails.id
+            ).where(ShoppingCart.product_uid == request.json["product_uid"])
+        ).scalar()
+        if check_exist is None:
+            new_item = ShoppingCart(
+                product_uid=request.json["product_uid"],
+                quantity=request.json["quantity"],
+                customer=get_user.customerDetails
+            )
+            db.session.add(new_item)
+            db.session.commit()
+            return ""
+        else:
+            check_exist.quantity += int(request.json["quantity"])
+            db.session.commit()
+            return ""
+    return ""
 
 # user handling endpoints
 
@@ -278,6 +330,7 @@ def show_user_details():
         form=addressform,
         detailform=customerdetailsform,
     )
+
 
 @logged_in_check
 @app.route("/edit-user", methods=["GET", "POST"])
@@ -396,6 +449,7 @@ def edit_address(address_id):
             }
         )
 
+
 @logged_in_check
 @app.route("/user/delete-address/<int:address_id>")
 def delete_address(address_id):
@@ -404,7 +458,9 @@ def delete_address(address_id):
     db.session.commit()
     return redirect(url_for("show_user_details"))
 
+
 # admin/employee control panel handling
+
 
 @employee_check
 @app.route("/users/control-panel", methods=["GET", "POST"])
@@ -415,6 +471,7 @@ def user_control_panel():
 
     return render_template("user-control.html", users=user_list, form=roleform)
 
+
 @admin_check
 @app.route("/users/delete-user/<int:user_id>")
 def delete_user(user_id):
@@ -422,6 +479,7 @@ def delete_user(user_id):
     db.session.delete(selected_user)
     db.session.commit()
     return redirect(url_for("user_control_panel"))
+
 
 @admin_check
 @app.route("/users/edit-role/<int:user_id>", methods=["POST"])
@@ -438,7 +496,9 @@ def edit_role(user_id):
     # AJAX no redirect/render
     return ""
 
+
 # User registration and password reset endpoints
+
 
 @app.route("/users/login", methods=["GET", "POST"])
 def login():
