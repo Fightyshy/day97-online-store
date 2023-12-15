@@ -89,17 +89,29 @@
         <div class="accordion-item">
           <h2 class="accordion-header">
             <button class="accordion-button" type="button" data-bs-toggle="collapse" data-bs-target="#address-collapse-{{address.id}}" aria-expanded="false" aria-controls="#address-collapse-{{address.id}}">
-              <address id="address-{{address.id}}">
+              <address id="address-brief-{{address.id}}">
                 {{address.address_one}}<br>
                 {{address.address_two}}<br>
                 {{address.city}}<br>
-                {{address.country}}<br>
               </address>
             </button>
           </h2>
           <div id="address-collapse-{{address.id}}" class="accordion-collapse collapse" data-bs-parent="#address-accordion">
             <div class="accordion-body">
-              <p>{{address.phone_number}}</p>
+              <!-- https://www.w3resource.com/twitter-bootstrap/examples/twitter-bootstrap-address-example.php -->
+              <address id="address-{{address.id}}">
+                <strong>{{current_user.customerDetails.first_name}} {{current_user.customerDetails.last_name}}</strong><br>
+                {{address.address_one}}<br>
+                {{address.address_two}},<br>
+                {% if address.state != "" %}
+                  {{address.state}},<br>
+                {% endif %}
+                {{address.city}},<br>
+                {{address.country}},<br>
+                {{address.postcode}}<br>
+                Phone number: {{address.phone_number}}<br>
+
+              </address>
               <button id="edit-user-address-{{address.id}}" class="btn btn-primary w-100" data-bs-toggle="modal" data-bs-target="#edit-address-modal-{{address.id}}">Edit address</button>
               <a href="{{url_for('delete_address', address_id=address.id)}}" id="delete-address-{{address.id}}" class="btn btn-danger w-100">Delete address</a>
             </div>
@@ -347,6 +359,7 @@
         "{{url_for('edit_user_details')}}",
         $(this).serialize(),
         function(data){
+          alert("Your details have been updated!")
           location.reload()
         }
       )
