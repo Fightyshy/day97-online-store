@@ -23,6 +23,7 @@ from flask import (
 from forms import (
     AddressForm,
     CommentForm,
+    CustomerDetailsForm,
     ProductForm,
     ProductStockForm,
     UserEditRoleForm,
@@ -214,26 +215,62 @@ def delete_product(product_id):
 
 
 # TODO auth wrapper
-@app.route("/user/")
+@app.route("/user")
 def show_user_details():
     # get id, check logged in or admin
     selected_user = db.get_or_404(User, current_user.id)
     addressform = AddressForm(request.form, csrf_enabled=True)
+    customerdetailsform = CustomerDetailsForm(csrf_enabled=True)
     # render details and all addresses
     return render_template(
         "user-page.html",
         user=selected_user,
         current_user=current_user,
         form=addressform,
+        detailform=customerdetailsform,
     )
 
 
-@app.route("/edit-user/<int:user_id>")
-def edit_user_details(user_id):
-    # TODO get user, checked if logged in or admin
-    # TODO populate form with user
-    # TODO validate and submit changes to server
-    return user_id
+@app.route("/edit-user", methods=["GET", "POST"])
+def edit_user_details():
+    # get user, checked if logged in or admin
+    selected_user = db.get_or_404(User, current_user.id)
+    if request.method == "POST":
+        # validate and submit changes to server
+        customerdetailsform = CustomerDetailsForm(request.form)
+        if customerdetailsform.validate():
+            selected_user.customerDetails.first_name = (
+                customerdetailsform.first_name.data
+            )
+            selected_user.customerDetails.last_name = (
+                customerdetailsform.last_name.data
+            )
+            selected_user.customerDetails.date_of_birth = (
+                customerdetailsform.date_of_birth.data
+            )
+            phone_number = f"{customerdetailsform.phone_code.data} {customerdetailsform.phone_number.data}"
+            selected_user.customerDetails.phone_number = phone_number
+            db.session.commit()
+            return ""
+    if selected_user.role == "user":
+        (
+            phone_code,
+            phone_number,
+        ) = selected_user.customerDetails.phone_number.split(" ")
+        # populate form with user
+        return jsonify(
+            {
+                "customerDetails": {
+                    "first_name": selected_user.customerDetails.first_name,
+                    "last_name": selected_user.customerDetails.last_name,
+                    "dob": selected_user.customerDetails.date_of_birth.strftime(
+                        "%Y-%m-%d"
+                    ),
+                    "phone_code": phone_code,
+                    "phone_number": phone_number,
+                }
+            }
+        )
 
 
 # TODO auth wrapper

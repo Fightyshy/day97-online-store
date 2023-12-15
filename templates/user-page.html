@@ -1,5 +1,6 @@
 {% include "header.html" %}
 <div class="card mb-4">
+  <button id="edit-customerdetails-button" class="btn btn-primary w-100" data-bs-toggle="modal" data-bs-target="#edit-customerdetails-modal">Edit details</button>
     <div class="card-body text-center">
         <div class="row">
             <div class="col-sm-3">
@@ -38,6 +39,46 @@
         </div>
         <hr>
     </div>
+    <!-- Edit details modal -->
+    <div class="modal fade" id="edit-customerdetails-modal" tabindex="-1" aria-labelledby="edit-customerdetails-modal-label" aria-hidden="true">
+      <div class="modal-dialog">
+        <div class="modal-content">
+          <div class="modal-header">
+            <h1 class="modal-title fs-5" id="edit-customerdetails-modal-label">Edit details </h1>
+            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+          </div>
+          <form id="edit-customerdetails" action="{{url_for('edit_user_details')}}" method="post">
+            <div class="modal-body">
+              {{detailform.csrf_token}}
+            <div class="mb-3">
+                {{detailform.first_name.label}}
+                {{detailform.first_name(class="form-control")}}
+              </div>
+            <div class="mb-3">
+                {{detailform.last_name.label}}
+                {{detailform.last_name(class="form-control")}}
+              </div>
+            <div class="mb-3">
+                {{detailform.date_of_birth.label}}
+                {{detailform.date_of_birth(class="form-control")}}
+              </div>
+            <div class="mb-3">
+                {{detailform.phone_code.label}}
+                {{detailform.phone_code(class="form-control")}}
+              </div>
+            <div class="mb-3">
+                {{detailform.phone_number.label}}
+                {{detailform.phone_number(class="form-control")}}
+              </div>
+            </div>
+            <div class="modal-footer">
+              <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+              {{detailform.submit(id="edit-customerdetails-submit", class="btn btn-primary")}}
+            </div>
+          </form>
+        </div>
+      </div>
+    </div>
 </div>
 <div class="d-flex flex-column flex-md-row p-4 gap-4 py-md-5 align-items-center justify-content-center">
     <main class="w-100 m-auto">
@@ -56,7 +97,7 @@
               </address>
             </button>
           </h2>
-          <div id="address-collapse-{{address.id}}" class="accordion-collapse collapse show" data-bs-parent="#address-accordion">
+          <div id="address-collapse-{{address.id}}" class="accordion-collapse collapse" data-bs-parent="#address-accordion">
             <div class="accordion-body">
               <p>{{address.phone_number}}</p>
               <button id="edit-user-address-{{address.id}}" class="btn btn-primary w-100" data-bs-toggle="modal" data-bs-target="#edit-address-modal-{{address.id}}">Edit address</button>
@@ -144,6 +185,11 @@
           $("#edit-address-{{address.id}}").submit(function(event){
             event.preventDefault();
 
+            if($("#edit-phone_number-{{address.id}}").attr("disabled")){
+              $("#edit-phone_number-{{address.id}}").removeAttr("disabled")
+              $("#edit-phone_code-{{address.id}}").removeAttr("disabled")
+            }
+
             $.post(
               $(this).attr("action"),
               $(this).serialize(),
@@ -155,19 +201,31 @@
           })
 
           $("#delete-address-{{address.id}}").click(function(event){
-          event.preventDefault();
-          let delConfirm = confirm("Do you want to delete this address?")
-          if(delConfirm==true){
-            $.get(
-              $(this).attr("href"),
-              {},
-              function(data){
-                location.reload();
-                alert("Address has been deleted")
-              }
-            )
-          }
-        })
+            event.preventDefault();
+            let delConfirm = confirm("Do you want to delete this address?")
+            if(delConfirm==true){
+              $.get(
+                $(this).attr("href"),
+                {},
+                function(data){
+                  location.reload();
+                  alert("Address has been deleted")
+                }
+              )
+            }
+          })
+
+          $("#edit-same_number-{{address.id}}").change((event)=>{
+            event.preventDefault();
+            // https://stackoverflow.com/questions/43446641/jquery-attribute-exists-or-not
+            if(!($("#edit-phone_number-{{address.id}}").attr("disabled"))){
+              $("#edit-phone_number-{{address.id}}").attr("disabled", true)
+              $("#edit-phone_code-{{address.id}}").attr("disabled", true)
+            }else{
+              $("#edit-phone_number-{{address.id}}").removeAttr("disabled")
+              $("#edit-phone_code-{{address.id}}").removeAttr("disabled")
+            }
+          })
         </script>
         {% endfor %}
     </div>
@@ -264,6 +322,34 @@
         $("#phone_number").removeAttr("disabled")
         $("#phone_code").removeAttr("disabled")
       }
+    })
+
+    $("#edit-customerdetails-button").click((event)=>{
+      event.preventDefault()
+      
+      $.get(
+        "{{url_for('edit_user_details')}}",
+        {},
+        (data)=>{
+          $("#first_name").val(data.customerDetails.first_name)
+          $("#last_name").val(data.customerDetails.last_name)
+          $("#date_of_birth").val(data.customerDetails.dob)
+          $("#phone_code").val(data.customerDetails.phone_code)
+          $("#phone_number").val(data.customerDetails.phone_number)
+        }
+      )
+    })
+
+    $("#edit-customerdetails").submit(function(event){
+      event.preventDefault();
+
+      $.post(
+        "{{url_for('edit_user_details')}}",
+        $(this).serialize(),
+        function(data){
+          location.reload()
+        }
+      )
     })
 </script>
 {% include "footer.html" %}

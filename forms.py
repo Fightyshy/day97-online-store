@@ -47,6 +47,7 @@ class AddressForm(FlaskForm):
     phone_code = SelectField(
         "Country code", choices=[code for key, code in data.items()]
     )
+    # https://stackoverflow.com/questions/18957119/regex-number-or-empty
     phone_number = StringField(
         "Phone number", validators=[Regexp("^\d{7,15}|$")]
     )
@@ -77,9 +78,8 @@ class CustomerDetailsForm(FlaskForm):
     phone_code = SelectField(
         "Country code", choices=[code for key, code in data.items()], validators=[DataRequired()]
     )
-    # , Regexp("[0-9]{7,15}")
     phone_number = StringField("Phone number", validators=[DataRequired(), Regexp("\d{7,15}|$")])
-    # submit = SubmitField("Save details")
+    submit = SubmitField("Save details")
 
 
 class UserForm(FlaskForm):
