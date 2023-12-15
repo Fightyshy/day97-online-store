@@ -16,9 +16,17 @@
                     <hr class="my-4">
   
                     <!-- Shopping cart list start -->
+                    <!-- item["productref"] == product -->
+                    <!-- item["cartobj"] == item in cart -->
                     {% if cart|length == 0 %}
                     <h2>Your cart is currently empty!</h2>
                     {% else %}
+                    <script type="text/javascript">
+                      const formatter = new Intl.NumberFormat('en-US',{
+                        style:"currency",
+                        currency:"USD"
+                      })
+                    </script>
                         {% for item in cart %}
                         <div class="row mb-4 d-flex justify-content-between align-items-center">
                         <div class="col-md-2 col-lg-2 col-xl-2">
@@ -26,31 +34,52 @@
                             src="https://mdbcdn.b-cdn.net/img/Photos/new-templates/bootstrap-shopping-carts/img5.webp"
                             class="img-fluid rounded-3" alt="Cotton T-shirt"> -->
                         </div>
+                        <!-- Titles -->
                         <div class="col-md-3 col-lg-3 col-xl-3">
-                            <h6 class="text-muted">Shirt</h6>
-                            <h6 class="text-black mb-0">Cotton T-shirt</h6>
+                            <h6 class="text-muted">{{item["productref"].name}}</h6>
+                            <h6 class="text-black mb-0">{{item["productref"].category}}</h6>
                         </div>
                         <div class="col-md-3 col-lg-3 col-xl-2 d-flex">
-                            <button class="btn btn-link px-2"
+                            <!-- <button id="minus-quant-{{item['cartobj'].id}}" class="btn btn-link px-2"
                             onclick="this.parentNode.querySelector('input[type=number]').stepDown()">
-                            <i class="fas fa-minus"></i>
-                            </button>
+                            <i class="fas fa-minus">-</i>
+                            </button> -->
 
-                            <input id="form1" min="0" name="quantity" value="1" type="number"
+                            <input id="quantity-{{item['cartobj'].id}}" min="0" name="quantity" value="{{item['cartobj'].quantity}}" type="number"
                             class="form-control form-control-sm" />
 
-                            <button class="btn btn-link px-2"
+                            <!-- <button id="add-quant-{{item['cartobj'].id}}" class="btn btn-link px-2"
                             onclick="this.parentNode.querySelector('input[type=number]').stepUp()">
-                            <i class="fas fa-plus"></i>
-                            </button>
+                            <i class="fas fa-plus">+</i>
+                            </button> -->
                         </div>
                         <div class="col-md-3 col-lg-2 col-xl-2 offset-lg-1">
-                            <h6 class="mb-0">€ 44.00</h6>
+                          <!-- item+quantity subtotal -->
+                            <h6 id="item-subtotal-{{item['cartobj'].id}}" class="mb-0">$ {{ '{0:.2f}'.format(item["productref"].price * item["cartobj"].quantity)}}</h6>
                         </div>
                         <div class="col-md-1 col-lg-1 col-xl-1 text-end">
-                            <a href="#!" class="text-muted"><i class="fas fa-times"></i></a>
+                            <button id="remove-cart-{{item['cartobj'].id}}" class="text-muted"><i class="fas fa-times">Remove</i></a>
                         </div>
                         </div>
+                        <script text="text/javascript">
+                          $("#quantity-{{item['cartobj'].id}}").change(function(event){
+                            event.preventDefault();
+
+                            $.ajax({
+                              data: JSON.stringify({
+                                "cart_id":"{{item['cartobj'].id}}",
+                                "quantity":$(this).val()
+                              }),
+                              type: "POST",
+                              url: "{{url_for('change_product_quantity')}}",
+                              contentType: "application/json",
+                              accepts: "application/json"
+                            }).done(function(data){
+                              let subtotal = formatter.format((parseFloat("{{item['productref'].price}}")*parseFloat(data.new_quantity)))
+                              $("#item-subtotal-{{item['cartobj'].id}}").text(subtotal)
+                            })
+                          })
+                        </script>
                         {% endfor %}
                     <hr class="my-4">
                     {% endif %}
