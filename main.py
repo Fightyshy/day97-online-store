@@ -1,3 +1,4 @@
+from functools import wraps
 import smtplib
 import jwt
 import datetime as dt
@@ -253,6 +254,11 @@ def delete_product(product_id):
     db.session.commit()
     return redirect(url_for("product_control_panel"))
 
+@logged_in_check
+@app.route("/user/shopping-cart")
+def show_shopping_cart():
+    selected_user_cart = db.get_or_404(User, current_user.id).customerDetails.shoppingcart
+    return render_template("shopping-cart.html", cart=selected_user_cart, current_user=current_user)
 
 # user handling endpoints
 
