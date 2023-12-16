@@ -3,6 +3,7 @@ import smtplib
 import jwt
 import datetime as dt
 from flask_login import LoginManager, current_user, login_user, logout_user
+import pycountry
 from models import (
     Address,
     CustomerDetails,
@@ -37,15 +38,12 @@ from forms import (
 from sqlalchemy import func
 from werkzeug.security import generate_password_hash, check_password_hash
 from flask_bootstrap import Bootstrap5
-from helper_funcs import generate_list_id
+from helper_funcs import cart_merger, generate_list_id
 from sqlalchemy import and_
+import stripe
 
-# consts
-# Temp email consts
-SENDER = "testingtontester61@gmail.com"
-SENDER_PASSWORD = "dyuqvhdfhrexshoa"
-
-app = Flask(__name__)
+# set static path and folder to serve
+app = Flask(__name__, static_url_path="", static_folder="assets")
 app.config["SECRET_KEY"] = "8BYkEfBA6O6donzWlSihBXox7C0sKR6b"  # csrf
 app.config["SQLALCHEMY_DATABASE_URI"] = "sqlite:///store.db"
 
@@ -58,7 +56,16 @@ with app.app_context():
 
 login_manager = LoginManager()
 login_manager.init_app(app)
-#
+
+# stripe api key
+stripe.api_key = "sk_test_Ou1w6LVt3zmVipDVJsvMeQsc"
+
+# consts
+# Temp email consts
+SENDER = "testingtontester61@gmail.com"
+SENDER_PASSWORD = "dyuqvhdfhrexshoa"
+# Fill some random countries in the area
+ALLOWED = ["SG", "TH", "US", "GB", "JP", "MY", "AU"]
 
 
 @login_manager.user_loader
@@ -275,7 +282,7 @@ def delete_product(product_id):
 
 
 @logged_in_check
-@app.route("/user/shopping-cart")
+@app.route("/shopping-cart")
 def show_shopping_cart():
     selected_user_cart = db.get_or_404(
         User, current_user.id
@@ -289,7 +296,7 @@ def show_shopping_cart():
         .scalars()
         .all()
     )
-    # print(products_in_cart)
+
     truecart = []
     for item in selected_user_cart:
         for product in products_in_cart:
@@ -313,7 +320,100 @@ def show_shopping_cart():
     )
 
 
-@app.route("/products/add-to-cart", methods=["POST"])
+@app.route("/cart/checkout", methods=["GET", "POST"])
+def show_checkout():
+    truecart = cart_merger(db, current_user)
+    final_total = "{0:.2f}".format(
+        sum(
+            [
+                float(item["cartobj"].quantity * item["productref"].price)
+                for item in truecart
+            ]
+        )
+        + 10  # shipping cost (flat fee)
+    )
+    return render_template("checkout.html", total=final_total, cart=truecart)
+
+
+# stripe will call this to generate it's own embed
+@app.route("/create-checkout-session", methods=["POST"])
+def create_checkout_session():
+    try:
+        truecart = cart_merger(db, current_user)
+        list_stripe_products = [
+            stripe.Product.create(
+                name=item["productref"].name,
+                description=item["productref"].description,
+                unit_label=item["cartobj"].product_uid,
+            )
+            for item in truecart
+        ]
+
+        list_stripe_cart = []
+        for i in range(0, len(list_stripe_products)):
+            list_stripe_cart.append(
+                {
+                    "price": stripe.Price.create(
+                        product=list_stripe_products[i],
+                        unit_amount=int(
+                            truecart[i]["productref"].price * 100
+                        ),  # To cents x100 and cast int
+                        currency="usd",
+                    ),
+                    "quantity": truecart[i]["cartobj"].quantity,
+                }
+            )
+
+        session = stripe.checkout.Session.create(
+            ui_mode="embedded",
+            line_items=[
+                {"price": item["price"].id, "quantity": item["quantity"]}
+                for item in list_stripe_cart
+            ],
+            mode="payment",
+            invoice_creation={"enabled" : True},
+            shipping_address_collection={"allowed_countries": ALLOWED},
+            # generate options on session create, extend more as necessary
+            shipping_options=[
+                {
+                    "shipping_rate_data": {
+                        "type": "fixed_amount",
+                        "fixed_amount": {"amount": 1000, "currency": "usd"},
+                        "display_name": "Flat rate shipping",
+                        "delivery_estimate": {
+                            "minimum": {"unit": "business_day", "value": 5},
+                            "maximum": {"unit": "business_day", "value": 7},
+                        },
+                    },
+                }
+            ],
+            return_url="http://localhost:5000/checkout-success",
+        )
+    except Exception as e:
+        return str(e)
+
+    return jsonify(clientSecret=session.client_secret)
+
+
+@logged_in_check
+@app.route("/checkout-success")
+def successful_payment():
+    # get cart first for invoicing
+    # clean shopping cart of user
+    selected_user = db.get_or_404(User, current_user.id)
+    # https://stackoverflow.com/questions/48839482/deleting-list-of-items-in-sqlalchemy-flask
+    ShoppingCart.query.filter(
+        ShoppingCart.customer.has(
+            CustomerDetails.id == selected_user.customerDetails.id
+        )
+    ).delete()
+
+    db.session.commit()
+    return render_template("successful_checkout.html")
+
+
+@logged_in_check
+@app.route("/cart/add-to-cart", methods=["POST"])
 def add_to_cart():
     if request.method == "POST":
         # for directly retrieving json
@@ -340,17 +440,18 @@ def add_to_cart():
     return ""
 
 
-# TODO remove cart
-@app.route("/products/remove-from-cart/<int:cart_id>", methods=["POST"])
+@logged_in_check
+@app.route("/cart/remove-from-cart/<int:cart_id>", methods=["POST"])
 def remove_from_cart(cart_id):
-    if request.method=="POST":
+    if request.method == "POST":
         selected_cart_item = db.get_or_404(ShoppingCart, cart_id)
         db.session.delete(selected_cart_item)
         db.session.commit()
         return ""
 
 
-@app.route("/cart/add-quantity", methods=["POST"])
+@logged_in_check
+@app.route("/cart/change-quantity", methods=["POST"])
 def change_product_quantity():
     if request.method == "POST":
         selected_cart_item = db.get_or_404(

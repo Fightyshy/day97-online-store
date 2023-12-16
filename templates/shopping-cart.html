@@ -85,16 +85,9 @@
                               $.each(itemarray, function(index, value){
                                 subtotal+=parseFloat($(itemarray[index]).find(".price").text().substring(1))*parseFloat($(itemarray[index]).find(".quantity").val())
                               })
-                              subtotal = formatter.format(subtotal)
-                              $("#subtotal").text(subtotal)
+                              $("#subtotal").text(formatter.format(subtotal))
+                              $("#final-total").text(formatter.format(subtotal+10))
                               
-                              // subtotal=0.0
-                              // for(let i=1;i<=parseInt("{{cart|length}}");i++){
-                              //   let itemtotal = $("#price-"+i).text().substring(1)
-                              //   let itemquant = $("#quantity-"+i).val()
-                              //   subtotal+=parseFloat(itemtotal)*parseFloat(itemquant)
-                              // }
-                              // $("#subtotal").text(formatter.format(subtotal))
                             })
                           })
 
@@ -112,8 +105,8 @@
                               $.each(itemarray, function(index, value){
                                 subtotal+=parseFloat($(itemarray[index]).find(".price").text().substring(1))*parseFloat($(itemarray[index]).find(".quantity").val())
                               })
-                              subtotal = formatter.format(subtotal)
-                              $("#subtotal").text(subtotal)
+                              $("#subtotal").text(formatter.format(subtotal))
+                              $("#final-total").text(formatter.format(subtotal+10))
                             })
                           })
                         </script>
@@ -133,33 +126,30 @@
                       <h5 id="subtotal">${{subtotal}}</h5>
                     </div>
                     
-                    <!-- TODO shipping ? -->
+                    <!-- Flat fee for now -->
                     <h5 class="text-uppercase mb-3">Shipping</h5>
   
                     <div class="d-flex justify-content-between mb-4">
                         <h6 class="text-uppercase">Standard delivery</h6>
-                        <h5>$ 20.00</h5>
+                        <h5>$10.00</h5>
                       </div>
-  
-                    <!-- <h5 class="text-uppercase mb-3">Give code</h5>
-  
-                    <div class="mb-5">
-                      <div class="form-outline">
-                        <input type="text" id="form3Examplea2" class="form-control form-control-lg" />
-                        <label class="form-label" for="form3Examplea2">Enter your code</label>
-                      </div>
-                    </div> -->
   
                     <hr class="my-4">
   
                     <div class="d-flex justify-content-between mb-5">
                       <h5 class="text-uppercase">Total price</h5>
-                      <h5>€ 137.00</h5>
+                      <h5 id="final-total">${{ '{0:.2f}'.format(subtotal|float+10)}}</h5>
                     </div>
   
-                    <button type="button" class="btn btn-dark btn-block btn-lg"
+                    <a href="{{ url_for('show_checkout') }}"class="btn btn-dark btn-block btn-lg" data-mdb-ripple-color="dark">Checkout</a>
+
+                    <!-- <button id="checkout" type="button" class="btn btn-dark btn-block btn-lg"
                       data-mdb-ripple-color="dark">Checkout</button>
-  
+                    <script type="text/javascript">
+                      $("#checkout").click(function(event){
+                        window.location.href="{{url_for('show_checkout')}}"
+                      })
+                    </script> -->
                   </div>
                 </div>
               </div>

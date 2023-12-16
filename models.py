@@ -134,7 +134,7 @@ class Order(db.Model):
     )
     status: Mapped[str] = mapped_column(String, default="pending", nullable=False)
 
-    # TODO address, either service layer copy/paste or set as relationship
+    # set as customer to own order
     customer_id: Mapped[int] = mapped_column(ForeignKey("customers.id"))
     customer: Mapped["CustomerDetails"] = relationship(back_populates="orders")
 
