@@ -57,7 +57,7 @@ with app.app_context():
 login_manager = LoginManager()
 login_manager.init_app(app)
 
-# stripe api key
+# stripe api key - currently public key
 stripe.api_key = "sk_test_Ou1w6LVt3zmVipDVJsvMeQsc"
 
 # consts
@@ -121,19 +121,20 @@ def home():
     # join with comments to access comment.rating
     # group by product to consolidate dupes from children
     # having to filter based on product rating avg by threshold
-    featured_products = (
-        db.session.execute(
-            db.select(Product)
-            .join(Product.comments)
-            .group_by(Product)
-            .having(func.avg(Comment.rating) >= 4)
-        )
-        .scalars()
-        .all()
-    )
+    # featured_products = (
+    #     db.session.execute(
+    #         db.select(Product)
+    #         .join(Product.comments)
+    #         .group_by(Product)
+    #         .having(func.avg(Comment.rating) >= 4)
+    #     )
+    #     .scalars()
+    #     .all()
+    # )
 
     # print([value.comments.rating for value in featured_products])
-    return render_template("index.html", featured=featured_products)
+    # return render_template("index.html", featured=featured_products)
+    return render_template("index.html")
 
 @app.route("/products/category/<category>")
 def show_category(category):
