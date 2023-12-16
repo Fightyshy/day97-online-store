@@ -39,7 +39,7 @@ from sqlalchemy import func
 from werkzeug.security import generate_password_hash, check_password_hash
 from flask_bootstrap import Bootstrap5
 from helper_funcs import cart_merger, generate_list_id
-from sqlalchemy import and_
+from sqlalchemy import and_, or_
 import stripe
 
 # set static path and folder to serve
@@ -135,6 +135,15 @@ def home():
     # print([value.comments.rating for value in featured_products])
     return render_template("index.html", featured=featured_products)
 
+@app.route("/products/category/<category>")
+def show_category(category):
+    if category=="rulebooks":
+        products = db.session.execute(db.select(Product).where(or_(Product.category=="Wargame Rulebooks", Product.category=="Roleplaying Rulebooks")))
+    elif category=="miniatures":
+        products = db.session.execute(db.select(Product).where(Product.category==category.title()))
+    elif category=="accessories":
+        products = db.session.execute(db.select(Product).where(or_(Product.category=="Dice", Product.category=="Accessories")))
+    return render_template("product-category.html", products=products.scalars().all(), category=category)
 
 # Retail store endpoints
 # GET only

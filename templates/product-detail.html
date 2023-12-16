@@ -9,7 +9,7 @@
                 <div class="small mb-1">{{product.category}} - {{product.product_uid}}</div>
                 <h1 class="display-5 fw-bolder">{{product.name}}</h1>
                 <div class="fs-5 mb-5">
-                    <span>${{product.price}}</span>
+                    <span>${{'{0:.2f}'.format(product.price)}}</span>
                 </div>
                 <p class="lead">{{product.description}}</p>
                 <div class="d-flex">
