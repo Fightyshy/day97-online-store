@@ -118,10 +118,6 @@ class ShoppingCart(db.Model):
     customer_id: Mapped[int] = mapped_column(ForeignKey("customers.id"))
     customer: Mapped["CustomerDetails"] = relationship(back_populates="shoppingcart")
 
-    # TODO 1>1 product
-
-    # product: Mapped["Product"] = relationship()
-
 
 class Order(db.Model):
     """Customer's sales invoice, generated AFTER checkout and store as part of order history reference, child of customer details, parent of list of products"""
@@ -159,8 +155,3 @@ class Product(db.Model):
 
     # comments on product
     comments: Mapped[List["Comment"]] = relationship(back_populates="product")
-
-    # cart_id: Mapped[int] = mapped_column(ForeignKey("shoppingcarts.id"))
-    # cart: Mapped["ShoppingCart"] = relationship(
-    #     back_populates="product", single_parent=True
-    # )

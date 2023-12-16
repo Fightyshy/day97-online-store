@@ -53,11 +53,12 @@ Bootstrap5(app)
 db.init_app(app)
 
 # sqlite db, will convert to local postgres db and dump creation script
-# with app.app_context():
-#     db.create_all()
+with app.app_context():
+    db.create_all()
 
 login_manager = LoginManager()
 login_manager.init_app(app)
+#
 
 
 @login_manager.user_loader
@@ -279,10 +280,36 @@ def show_shopping_cart():
     selected_user_cart = db.get_or_404(
         User, current_user.id
     ).customerDetails.shoppingcart
+    uids = [id.product_uid for id in selected_user_cart]
+    products_in_cart = (
+        db.session.execute(
+            # in_ allows us to get from list of product_uids
+            db.select(Product).where(Product.product_uid.in_(uids))
+        )
+        .scalars()
+        .all()
+    )
+    # print(products_in_cart)
+    truecart = []
+    for item in selected_user_cart:
+        for product in products_in_cart:
+            if item.product_uid == product.product_uid:
+                truecart.append({"cartobj": item, "productref": product})
+
+    # initial subtotal
+    init_subtotal = "{0:.2f}".format(
+        sum(
+            [
+                float(item["cartobj"].quantity * item["productref"].price)
+                for item in truecart
+            ]
+        )
+    )
     return render_template(
         "shopping-cart.html",
-        cart=selected_user_cart,
+        cart=truecart,
         current_user=current_user,
+        subtotal=init_subtotal,
     )
 
 
@@ -293,15 +320,15 @@ def add_to_cart():
         # https://stackoverflow.com/questions/10434599/get-the-data-received-in-a-flask-request
         get_user = db.get_or_404(User, current_user.id)
         check_exist = db.session.execute(
-            db.select(ShoppingCart).where(
-                ShoppingCart.customer_id == get_user.customerDetails.id
-            ).where(ShoppingCart.product_uid == request.json["product_uid"])
+            db.select(ShoppingCart)
+            .where(ShoppingCart.customer_id == get_user.customerDetails.id)
+            .where(ShoppingCart.product_uid == request.json["product_uid"])
         ).scalar()
         if check_exist is None:
             new_item = ShoppingCart(
                 product_uid=request.json["product_uid"],
                 quantity=request.json["quantity"],
-                customer=get_user.customerDetails
+                customer=get_user.customerDetails,
             )
             db.session.add(new_item)
             db.session.commit()
@@ -311,6 +338,28 @@ def add_to_cart():
             db.session.commit()
             return ""
     return ""
+
+
+# TODO remove cart
+@app.route("/products/remove-from-cart/<int:cart_id>", methods=["POST"])
+def remove_from_cart(cart_id):
+    if request.method=="POST":
+        selected_cart_item = db.get_or_404(ShoppingCart, cart_id)
+        db.session.delete(selected_cart_item)
+        db.session.commit()
+        return ""
+
+
+@app.route("/cart/add-quantity", methods=["POST"])
+def change_product_quantity():
+    if request.method == "POST":
+        selected_cart_item = db.get_or_404(
+            ShoppingCart, request.json["cart_id"]
+        )
+        selected_cart_item.quantity = request.json["quantity"]
+        db.session.commit()
+        return jsonify({"new_quantity": selected_cart_item.quantity})
+
 
 # user handling endpoints
 

@@ -28,38 +28,39 @@
                       })
                     </script>
                         {% for item in cart %}
-                        <div class="row mb-4 d-flex justify-content-between align-items-center">
-                        <div class="col-md-2 col-lg-2 col-xl-2">
-                            <!-- <img
-                            src="https://mdbcdn.b-cdn.net/img/Photos/new-templates/bootstrap-shopping-carts/img5.webp"
-                            class="img-fluid rounded-3" alt="Cotton T-shirt"> -->
-                        </div>
-                        <!-- Titles -->
-                        <div class="col-md-3 col-lg-3 col-xl-3">
-                            <h6 class="text-muted">{{item["productref"].name}}</h6>
-                            <h6 class="text-black mb-0">{{item["productref"].category}}</h6>
-                        </div>
-                        <div class="col-md-3 col-lg-3 col-xl-2 d-flex">
-                            <!-- <button id="minus-quant-{{item['cartobj'].id}}" class="btn btn-link px-2"
-                            onclick="this.parentNode.querySelector('input[type=number]').stepDown()">
-                            <i class="fas fa-minus">-</i>
-                            </button> -->
+                        <div id="item-{{item['cartobj'].id}}" class="items row mb-4 d-flex justify-content-between align-items-center">
+                          <div class="col-md-2 col-lg-2 col-xl-2">
+                              <!-- <img
+                              src="https://mdbcdn.b-cdn.net/img/Photos/new-templates/bootstrap-shopping-carts/img5.webp"
+                              class="img-fluid rounded-3" alt="Cotton T-shirt"> -->
+                          </div>
+                          <!-- Titles -->
+                          <div class="col-md-3 col-lg-3 col-xl-3">
+                              <h6 class="text-muted">{{item["productref"].name}}</h6>
+                              <h6 id="price-{{item['cartobj'].id}}" class="price text-black mb-0">${{'{0:.2f}'.format(item["productref"].price)}}</h6>
+                              <h6 class="text-black mb-0">{{item["productref"].category}}</h6>
+                          </div>
+                          <div class="col-md-3 col-lg-3 col-xl-2 d-flex">
+                              <!-- <button id="minus-quant-{{item['cartobj'].id}}" class="btn btn-link px-2"
+                              onclick="this.parentNode.querySelector('input[type=number]').stepDown()">
+                              <i class="fas fa-minus">-</i>
+                              </button> -->
 
-                            <input id="quantity-{{item['cartobj'].id}}" min="0" name="quantity" value="{{item['cartobj'].quantity}}" type="number"
-                            class="form-control form-control-sm" />
+                              <input id="quantity-{{item['cartobj'].id}}" min="1" max="{{(item['productref'].stock*0.05)|round|int}}" name="quantity" value="{{item['cartobj'].quantity}}" type="number"
+                              class="quantity form-control form-control-sm" />
 
-                            <!-- <button id="add-quant-{{item['cartobj'].id}}" class="btn btn-link px-2"
-                            onclick="this.parentNode.querySelector('input[type=number]').stepUp()">
-                            <i class="fas fa-plus">+</i>
-                            </button> -->
-                        </div>
-                        <div class="col-md-3 col-lg-2 col-xl-2 offset-lg-1">
-                          <!-- item+quantity subtotal -->
-                            <h6 id="item-subtotal-{{item['cartobj'].id}}" class="mb-0">$ {{ '{0:.2f}'.format(item["productref"].price * item["cartobj"].quantity)}}</h6>
-                        </div>
-                        <div class="col-md-1 col-lg-1 col-xl-1 text-end">
-                            <button id="remove-cart-{{item['cartobj'].id}}" class="text-muted"><i class="fas fa-times">Remove</i></a>
-                        </div>
+                              <!-- <button id="add-quant-{{item['cartobj'].id}}" class="btn btn-link px-2"
+                              onclick="this.parentNode.querySelector('input[type=number]').stepUp()">
+                              <i class="fas fa-plus">+</i>
+                              </button> -->
+                          </div>
+                          <div class="col-md-3 col-lg-2 col-xl-2 offset-lg-1">
+                            <!-- item+quantity subtotal -->
+                              <h6 id="item-subtotal-{{item['cartobj'].id}}" class="mb-0">${{ '{0:.2f}'.format(item["productref"].price * item["cartobj"].quantity)}}</h6>
+                          </div>
+                          <div class="col-md-1 col-lg-1 col-xl-1 text-end">
+                              <button id="remove-cart-{{item['cartobj'].id}}" class="text-muted"><i class="fas fa-times">Remove</i></a>
+                          </div>
                         </div>
                         <script text="text/javascript">
                           $("#quantity-{{item['cartobj'].id}}").change(function(event){
@@ -77,6 +78,42 @@
                             }).done(function(data){
                               let subtotal = formatter.format((parseFloat("{{item['productref'].price}}")*parseFloat(data.new_quantity)))
                               $("#item-subtotal-{{item['cartobj'].id}}").text(subtotal)
+
+                              subtotal=0
+                              let itemarray = $(".items").toArray() //get all items in cart
+                              //each is a jQuery specific iterator
+                              $.each(itemarray, function(index, value){
+                                subtotal+=parseFloat($(itemarray[index]).find(".price").text().substring(1))*parseFloat($(itemarray[index]).find(".quantity").val())
+                              })
+                              subtotal = formatter.format(subtotal)
+                              $("#subtotal").text(subtotal)
+                              
+                              // subtotal=0.0
+                              // for(let i=1;i<=parseInt("{{cart|length}}");i++){
+                              //   let itemtotal = $("#price-"+i).text().substring(1)
+                              //   let itemquant = $("#quantity-"+i).val()
+                              //   subtotal+=parseFloat(itemtotal)*parseFloat(itemquant)
+                              // }
+                              // $("#subtotal").text(formatter.format(subtotal))
+                            })
+                          })
+
+                          $("#remove-cart-{{item['cartobj'].id}}").click(function(event){
+                            event.preventDefault()
+                            $.ajax({
+                              type:"POST",
+                              url: "{{url_for('remove_from_cart', cart_id=item['cartobj'].id)}}"
+                            }).done(function(data){
+                              $("#item-{{item['cartobj'].id}}").remove()
+
+                              subtotal=0
+                              let itemarray = $(".items").toArray() //get all items in cart
+                              //each is a jQuery specific iterator
+                              $.each(itemarray, function(index, value){
+                                subtotal+=parseFloat($(itemarray[index]).find(".price").text().substring(1))*parseFloat($(itemarray[index]).find(".quantity").val())
+                              })
+                              subtotal = formatter.format(subtotal)
+                              $("#subtotal").text(subtotal)
                             })
                           })
                         </script>
@@ -93,7 +130,7 @@
   
                     <div class="d-flex justify-content-between mb-4">
                       <h5 class="text-uppercase">items {{cart|length}}</h5>
-                      <h5>$ 132.00</h5>
+                      <h5 id="subtotal">${{subtotal}}</h5>
                     </div>
                     
                     <!-- TODO shipping ? -->
