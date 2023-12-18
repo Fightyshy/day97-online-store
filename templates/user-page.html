@@ -1,4 +1,7 @@
 {% include "header.html" %}
+<!-- <script type="text/javascript">
+  window.intlTelInputGlobals.loadUtils("https://cdn.jsdelivr.net/npm/intl-tel-input@18.2.1/build/js/utils.js");
+</script> -->
 <div class="card mb-4">
   <button id="edit-customerdetails-button" class="btn btn-primary w-100" data-bs-toggle="modal" data-bs-target="#edit-customerdetails-modal">Edit details</button>
     <div class="card-body text-center">
@@ -47,7 +50,7 @@
             <h1 class="modal-title fs-5" id="edit-customerdetails-modal-label">Edit details </h1>
             <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
           </div>
-          <form id="edit-customerdetails" action="{{url_for('edit_user_details')}}" method="post">
+          <form id="edit-customerdetails" action="{{url_for('edit_user_details')}}" method="post" novalidate>
             <div class="modal-body">
               {{detailform.csrf_token}}
             <div class="mb-3">
@@ -62,12 +65,8 @@
                 {{detailform.date_of_birth.label}}
                 {{detailform.date_of_birth(class="form-control")}}
               </div>
-            <div class="mb-3">
-                {{detailform.phone_code.label}}
-                {{detailform.phone_code(class="form-control")}}
-              </div>
-            <div class="mb-3">
-                {{detailform.phone_number.label}}
+            <div class="mb-3 input-group">
+                {{detailform.phone_number.label(for="_phone_number", class="input-group-text")}}
                 {{detailform.phone_number(class="form-control")}}
               </div>
             </div>
@@ -76,6 +75,9 @@
               {{detailform.submit(id="edit-customerdetails-submit", class="btn btn-primary")}}
             </div>
           </form>
+          <script text="text/javascript">
+
+          </script>
         </div>
       </div>
     </div>
@@ -155,10 +157,6 @@
                   <div class="mb-3">
                       {{form.same_number(id="edit-same_number-"+address.id|string)}}
                       {{form.same_number.label(for="edit-same_number-"+address.id|string)}}
-                  </div>
-                  <div class="mb-3">
-                      {{form.phone_code.label(for="edit-phone_code-"+address.id|string)}}
-                      {{form.phone_code(id="edit-phone_code-"+address.id|string, class="form-control")}}
                   </div>
                   <div class="mb-3">
                       {{form.phone_number.label(for="edit-phone_number-"+address.id|string)}}
@@ -285,12 +283,8 @@
                     {{form.same_number.label}}
                 </div>
                 <div class="mb-3">
-                    {{form.phone_code.label}}
-                    {{form.phone_code(class="form-control")}}
-                </div>
-                <div class="mb-3">
-                    {{form.phone_number.label}}
-                    {{form.phone_number(class="form-control")}}
+                    {{form.phone_number.label(for="_address-phone_number")}}
+                    {{form.phone_number(id="address-phone_number" class="form-control")}}
                 </div>
               </div>
               <div class="modal-footer">
@@ -304,6 +298,13 @@
 </div>
 <!-- TODO scripts for post/ajax -->
 <script type="text/javascript">
+    //https://www.twilio.com/blog/a-phone-number-input-field-for-flask-forms
+    //Hidden works, so set hidden and setup phone field to insert
+    detailsPhoneField = document.getElementById("phone_number")
+    detailsPhoneField.setAttribute("hidden", true)
+    detailsPhoneField.parentElement.insertAdjacentHTML('beforeend', '<input type="tel" id="_phone_number" class="form-control">');
+    let IntlDetailPhoneField = document.getElementById('_phone_number');
+
     $("#add-address").submit(function(event){
       event.preventDefault();
       // https://stackoverflow.com/questions/6162573/jquery-form-serialize-returns-an-empty-string
@@ -338,7 +339,6 @@
 
     $("#edit-customerdetails-button").click((event)=>{
       event.preventDefault()
-      
       $.get(
         "{{url_for('edit_user_details')}}",
         {},
@@ -346,8 +346,17 @@
           $("#first_name").val(data.customerDetails.first_name)
           $("#last_name").val(data.customerDetails.last_name)
           $("#date_of_birth").val(data.customerDetails.dob)
-          $("#phone_code").val(data.customerDetails.phone_code)
-          $("#phone_number").val(data.customerDetails.phone_number)
+
+          //init and populate field
+          let detailsPhoneIti = window.intlTelInput(IntlDetailPhoneField, {
+            separateDialCode: true,
+            utilsScript: "https://cdn.jsdelivr.net/npm/intl-tel-input@18.2.1/build/js/utils.js",
+          });
+          detailsPhoneIti.setNumber(data.customerDetails.phone_number)
+          detailsPhoneIti.setCountry(data.customerDetails.alpha_2)
+          IntlDetailPhoneField.addEventListener('blur', function() {
+            $("#phone_number").val(detailsPhoneIti.getNumber())
+          });
         }
       )
     })

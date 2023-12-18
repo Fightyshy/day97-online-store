@@ -45,14 +45,22 @@ class AddressForm(FlaskForm):
         "Phone number is same as in details",
         default=False,
     )
-    phone_code = SelectField(
-        "Country code", choices=[code for key, code in data.items()]
-    )
+    # phone_code = SelectField(
+    #     "Country code", choices=[code for key, code in data.items()]
+    # )
     # https://stackoverflow.com/questions/18957119/regex-number-or-empty
     phone_number = StringField(
-        "Phone number", validators=[Regexp("^\d{7,15}|$")]
+        "Phone number"
     )
 
+    # custom validator for phone numbers
+    def validate_phone_number(self, phone_number):
+        try:
+            number = phonenumbers.parse(phone_number.data)
+            if not phonenumbers.is_valid_number(number):
+                raise ValueError()
+        except(phonenumbers.phonenumberutil.NumberParseException, ValueError):
+            raise ValidationError("Invalid phone number entered")
     submit = SubmitField("Save address")
 
 

@@ -137,15 +137,37 @@ def home():
     # return render_template("index.html", featured=featured_products)
     return render_template("index.html")
 
+
 @app.route("/products/category/<category>")
 def show_category(category):
-    if category=="rulebooks":
-        products = db.session.execute(db.select(Product).where(or_(Product.category=="Wargame Rulebooks", Product.category=="Roleplaying Rulebooks")))
-    elif category=="miniatures":
-        products = db.session.execute(db.select(Product).where(Product.category==category.title()))
-    elif category=="accessories":
-        products = db.session.execute(db.select(Product).where(or_(Product.category=="Dice", Product.category=="Accessories")))
-    return render_template("product-category.html", products=products.scalars().all(), category=category)
+    if category == "rulebooks":
+        products = db.session.execute(
+            db.select(Product).where(
+                or_(
+                    Product.category == "Wargame Rulebooks",
+                    Product.category == "Roleplaying Rulebooks",
+                )
+            )
+        )
+    elif category == "miniatures":
+        products = db.session.execute(
+            db.select(Product).where(Product.category == category.title())
+        )
+    elif category == "accessories":
+        products = db.session.execute(
+            db.select(Product).where(
+                or_(
+                    Product.category == "Dice",
+                    Product.category == "Accessories",
+                )
+            )
+        )
+    return render_template(
+        "product-category.html",
+        products=products.scalars().all(),
+        category=category,
+    )
+
 
 # Retail store endpoints
 # GET only
@@ -382,7 +404,7 @@ def create_checkout_session():
                 for item in list_stripe_cart
             ],
             mode="payment",
-            invoice_creation={"enabled" : True},
+            invoice_creation={"enabled": True},
             shipping_address_collection={"allowed_countries": ALLOWED},
             # generate options on session create, extend more as necessary
             shipping_options=[
@@ -511,16 +533,16 @@ def edit_user_details():
             selected_user.customerDetails.date_of_birth = (
                 customerdetailsform.date_of_birth.data
             )
-            phone_number = f"{customerdetailsform.phone_code.data} {customerdetailsform.phone_number.data}"
-            selected_user.customerDetails.phone_number = phone_number
+            selected_user.customerDetails.phone_number = (
+                customerdetailsform.phone_number.data
+            )
             db.session.commit()
             return ""
     if selected_user.role == "user":
-        (
-            phone_code,
-            phone_number,
-        ) = selected_user.customerDetails.phone_number.split(" ")
-        # populate form with user
+        # extract country alpha_2
+        dial_code = phonenumbers.region_code_for_number(
+            phonenumbers.parse(selected_user.customerDetails.phone_number)
+        )
         return jsonify(
             {
                 "customerDetails": {
@@ -529,8 +551,8 @@ def edit_user_details():
                     "dob": selected_user.customerDetails.date_of_birth.strftime(
                         "%Y-%m-%d"
                     ),
-                    "phone_code": phone_code,
-                    "phone_number": phone_number,
+                    "phone_number": selected_user.customerDetails.phone_number,
+                    "alpha_2": dial_code.lower(),
                 }
             }
         )
@@ -707,7 +729,9 @@ def register():
                 return redirect((url_for("login")))
 
             hashed_pw = generate_password_hash(registerform.password.data)
-            parsed_number = phonenumbers.parse(registerform.details.phone_number.data)
+            parsed_number = phonenumbers.parse(
+                registerform.details.phone_number.data
+            )
             new_details = CustomerDetails(
                 first_name=registerform.details.first_name.data,
                 last_name=registerform.details.last_name.data,
