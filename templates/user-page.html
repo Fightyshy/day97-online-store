@@ -282,9 +282,9 @@
                     {{form.same_number}}
                     {{form.same_number.label}}
                 </div>
-                <div class="mb-3">
-                    {{form.phone_number.label(for="_address-phone_number")}}
-                    {{form.phone_number(id="address-phone_number" class="form-control")}}
+                <div class="mb-3 input-group">
+                    {{form.phone_number.label(for="_address-phone_number", class="input-group-text")}}
+                    {{form.phone_number(id="address-phone_number", class="form-control")}}
                 </div>
               </div>
               <div class="modal-footer">
@@ -304,15 +304,27 @@
     detailsPhoneField.setAttribute("hidden", true)
     detailsPhoneField.parentElement.insertAdjacentHTML('beforeend', '<input type="tel" id="_phone_number" class="form-control">');
     let IntlDetailPhoneField = document.getElementById('_phone_number');
+  
+    addAddressPhoneField = document.getElementById("address-phone_number")
+    addAddressPhoneField.setAttribute("hidden", true)
+    addAddressPhoneField.parentElement.insertAdjacentHTML("beforeend", "<input type='tel' id='_address-phone_number' class='form-control'>");
+    let IntlAddressPhoneField = document.getElementById("_address-phone_number")
+    let addAddressPhoneIti = window.intlTelInput(IntlAddressPhoneField, {
+      separateDialCode: true,
+      utilsScript: "https://cdn.jsdelivr.net/npm/intl-tel-input@18.2.1/build/js/utils.js",
+    });
 
     $("#add-address").submit(function(event){
       event.preventDefault();
       // https://stackoverflow.com/questions/6162573/jquery-form-serialize-returns-an-empty-string
       // Can't be disabled to submit properly
-      if($("#phone_number").attr("disabled")){
-        $("#phone_number").removeAttr("disabled")
-        $("#phone_code").removeAttr("disabled")
+      if($("#_address-phone_number").attr("disabled")){
+        $("#_address-phone_number").removeAttr("disabled")
       }
+      
+      //just update it lmao
+      $("#address-phone_number").val(addAddressPhoneIti.getNumber())
+
       $.post(
         "{{url_for('add_address')}}",
         $(this).serialize(),
@@ -328,12 +340,13 @@
     $("#same_number").change((event)=>{
       event.preventDefault();
       // https://stackoverflow.com/questions/43446641/jquery-attribute-exists-or-not
-      if(!($("#phone_number").attr("disabled"))){
-        $("#phone_number").attr("disabled", true)
-        $("#phone_code").attr("disabled", true)
+      if(!($("#_address-phone_number").attr("disabled"))){
+        $("#_address-phone_number").attr("disabled", true)
+        addAddressPhoneIti.setNumber("{{user.customerDetails.phone_number}}")
       }else{
-        $("#phone_number").removeAttr("disabled")
-        $("#phone_code").removeAttr("disabled")
+        $("#_address-phone_number").removeAttr("disabled")
+        addAddressPhoneIti.setNumber("")
+        addAddressPhoneIti.setCountry("us")
       }
     })
 
@@ -353,7 +366,6 @@
             utilsScript: "https://cdn.jsdelivr.net/npm/intl-tel-input@18.2.1/build/js/utils.js",
           });
           detailsPhoneIti.setNumber(data.customerDetails.phone_number)
-          detailsPhoneIti.setCountry(data.customerDetails.alpha_2)
           IntlDetailPhoneField.addEventListener('blur', function() {
             $("#phone_number").val(detailsPhoneIti.getNumber())
           });

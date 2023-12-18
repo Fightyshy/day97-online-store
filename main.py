@@ -539,10 +539,6 @@ def edit_user_details():
             db.session.commit()
             return ""
     if selected_user.role == "user":
-        # extract country alpha_2
-        dial_code = phonenumbers.region_code_for_number(
-            phonenumbers.parse(selected_user.customerDetails.phone_number)
-        )
         return jsonify(
             {
                 "customerDetails": {
@@ -551,8 +547,7 @@ def edit_user_details():
                     "dob": selected_user.customerDetails.date_of_birth.strftime(
                         "%Y-%m-%d"
                     ),
-                    "phone_number": selected_user.customerDetails.phone_number,
-                    "alpha_2": dial_code.lower(),
+                    "phone_number": selected_user.customerDetails.phone_number
                 }
             }
         )
@@ -562,10 +557,8 @@ def edit_user_details():
 @app.route("/user/add-address", methods=["POST"])
 def add_address():
     addressform = AddressForm(request.form)
-    print(addressform.validate_on_submit())
     # form validate and commit to db under address
     if addressform.validate_on_submit():
-        print(current_user.id)
         # Get user
         selected_user = db.get_or_404(User, current_user.id)
 
