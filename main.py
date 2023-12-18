@@ -3,6 +3,7 @@ import smtplib
 import jwt
 import datetime as dt
 from flask_login import LoginManager, current_user, login_user, logout_user
+import phonenumbers
 import pycountry
 from models import (
     Address,
@@ -706,11 +707,12 @@ def register():
                 return redirect((url_for("login")))
 
             hashed_pw = generate_password_hash(registerform.password.data)
+            parsed_number = phonenumbers.parse(registerform.details.phone_number.data)
             new_details = CustomerDetails(
                 first_name=registerform.details.first_name.data,
                 last_name=registerform.details.last_name.data,
                 date_of_birth=registerform.details.date_of_birth.data,
-                phone_number=f"{registerform.details.phone_code.data} {registerform.details.phone_number.data}",
+                phone_number=f"+{parsed_number.country_code} {parsed_number.national_number}",
             )
             new_user = User(
                 username=registerform.username.data,

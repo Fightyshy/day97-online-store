@@ -5,11 +5,11 @@
         {% with messages = get_flashed_messages() %}
         {% if messages %}
         {% for message in messages %}
-        <p class="flash">{{ message }}</p>
+        <p class="flash text-danger">{{ message }}</p>
         {% endfor %}
         {% endif %}
         {% endwith %}
-        <form action="{{ url_for('register') }}" method="post">
+        <form id="regform" action="{{ url_for('register') }}" method="post" class="needs-validation" novalidate>
             {{ form.csrf_token }}
             {{ form.details.csrf_token }}
             <h1 class="h3 mb-3 fw-normal">Register</h1>
@@ -19,19 +19,32 @@
                 <div class="form-floating mb-3">
                     {{ form.username(class="form-control", placeholder="") }}
                     {{ form.username.label(for="username") }}
+                    <div class="invalid-feedback">
+                        Please enter a username
+                    </div>
                 </div>
                 <div class="form-floating mb-3">
                     {{ form.email(class="form-control", placeholder="") }}
                     {{ form.email.label(for="email") }}
+                    <div class="invalid-feedback">
+                        Please enter a valid email address
+                    </div>
                 </div>
                 <div class="form-floating mb-3">
                     {{ form.password(class="form-control", placeholder="") }}
                     {{ form.password.label(for="password") }}
+                    <div class="invalid-feedback">
+                        Please enter a password
+                    </div>
                 </div>
                 <div class="form-floating mb-3">
                     {{ form.repeat_password(class="form-control", placeholder="") }}
                     {{ form.repeat_password.label(for="repeat_pw") }}
+                    <div class="invalid-feedback">
+                        Please enter the same password again
+                    </div>
                 </div>
+                
             </div>
 
             <div class="form-control">
@@ -39,27 +52,63 @@
                 <div class="form-floating mb-3">
                     {{ form.details.first_name(class="form-control", placeholder="") }}
                     {{ form.details.first_name.label(for="first_name") }}
+                    <div class="invalid-feedback">
+                        Please enter your given/first name
+                    </div>
                 </div>
                 <div class="form-floating mb-3">
                     {{ form.details.last_name(class="form-control", placeholder="") }}
                     {{ form.details.last_name.label(for="last_name") }}
+                    <div class="invalid-feedback">
+                        Please enter your last/surname
+                    </div>
                 </div>
                 <div class="input-group mb-3">
                     {{ form.details.date_of_birth.label(for="date_of_birth", class="input-group-text") }}
                     {{ form.details.date_of_birth(class="form-control") }}
+                    <div class="invalid-feedback">
+                        Please enter your date of birth
+                    </div>
                 </div>
-                <div class="form-floating mb-3">
-                    {{ form.details.phone_code(class="form-control", placeholder="") }}
-                    {{ form.details.phone_code.label(for="phone_code") }}
-                </div>
-                <div class="form-floating mb-3">
+                <div class="input-group mb-3">
+                    {{ form.details.phone_number.label(for="_details-phone_number", class="input-group-text") }}
                     {{ form.details.phone_number(class="form-control", placeholder="") }}
-                    {{ form.details.phone_number.label(for="phone_number") }}
+                    <div class="invalid-feedback">
+                        Please enter a valid phone_number
+                    </div>
                 </div>
             </div>
 
             {{ form.submit(class="btn btn-primary w-100 py-2") }}
         </form>
+        <script text="text/javascript">
+            //https://www.twilio.com/blog/a-phone-number-input-field-for-flask-forms
+            //Has to be substitution, deletion doesn't work
+            let wtf_phone_field = document.getElementById("details-phone_number")
+            wtf_phone_field.style.position = 'absolute';
+            wtf_phone_field.style.top = '-9999px';
+            wtf_phone_field.style.left = '-9999px';
+            wtf_phone_field.parentElement.insertAdjacentHTML('beforeend', '<div><input type="tel" id="_details-phone_number" class="form-control"></div>');
+            let fancy_phone_field = document.getElementById('_details-phone_number');
+            let fancy_phone_iti = window.intlTelInput(fancy_phone_field, {
+                separateDialCode: true,
+                utilsScript: "https://cdn.jsdelivr.net/npm/intl-tel-input@18.2.1/build/js/utils.js",
+            });
+            fancy_phone_iti.setNumber(wtf_phone_field.value);
+            fancy_phone_field.addEventListener('blur', function() {
+                wtf_phone_field.value = fancy_phone_iti.getNumber();
+            });
+
+            //bootstrap browser validation
+            let form = document.getElementsByClassName("needs-validation")[0]
+            form.addEventListener("submit", event =>{
+                if(!form.checkValidity()){
+                    event.preventDefault()
+                    event.stopPropagation()
+                }
+                form.classList.add("was-validated")
+            }, false)
+        </script>
     </main>
 </div>
 {% include "footer.html" %}

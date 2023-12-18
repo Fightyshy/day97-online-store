@@ -2,6 +2,7 @@ import datetime as dt
 import json
 from flask_wtf import FlaskForm
 from flask_wtf.file import FileField, FileAllowed
+import phonenumbers
 from wtforms import (
     DecimalField,
     HiddenField,
@@ -15,7 +16,7 @@ from wtforms import (
     TextAreaField,
     FormField,
 )
-from wtforms.validators import DataRequired, Email, Length, Regexp, NumberRange
+from wtforms.validators import DataRequired, Email, Length, Regexp, NumberRange, ValidationError
 
 with open("assets/json/phone.json") as phone:
     data = json.load(phone)
@@ -75,10 +76,19 @@ class CustomerDetailsForm(FlaskForm):
     first_name = StringField("First name", validators=[DataRequired()])
     last_name = StringField("Last name", validators=[DataRequired()])
     date_of_birth = DateField("Date of birth", validators=[DataRequired()])
-    phone_code = SelectField(
-        "Country code", choices=[code for key, code in data.items()], validators=[DataRequired()]
-    )
-    phone_number = StringField("Phone number", validators=[DataRequired(), Regexp("\d{7,15}|$")])
+    # phone_code = SelectField(
+    #     "Country code", choices=[code for key, code in data.items()], validators=[DataRequired()]
+    # )
+    phone_number = StringField("Phone number", validators=[DataRequired()])
+
+    # custom validator for phone numbers
+    def validate_phone_number(self, phone_number):
+        try:
+            number = phonenumbers.parse(phone_number.data)
+            if not phonenumbers.is_valid_number(number):
+                raise ValueError()
+        except(phonenumbers.phonenumberutil.NumberParseException, ValueError):
+            raise ValidationError("Invalid phone number entered")
     submit = SubmitField("Save details")
 
 
