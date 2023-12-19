@@ -45,10 +45,6 @@ class AddressForm(FlaskForm):
         "Phone number is same as in details",
         default=False,
     )
-    # phone_code = SelectField(
-    #     "Country code", choices=[code for key, code in data.items()]
-    # )
-    # https://stackoverflow.com/questions/18957119/regex-number-or-empty
     phone_number = StringField(
         "Phone number"
     )
@@ -84,9 +80,6 @@ class CustomerDetailsForm(FlaskForm):
     first_name = StringField("First name", validators=[DataRequired()])
     last_name = StringField("Last name", validators=[DataRequired()])
     date_of_birth = DateField("Date of birth", validators=[DataRequired()])
-    # phone_code = SelectField(
-    #     "Country code", choices=[code for key, code in data.items()], validators=[DataRequired()]
-    # )
     phone_number = StringField("Phone number", validators=[DataRequired()])
 
     # custom validator for phone numbers

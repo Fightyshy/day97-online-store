@@ -593,9 +593,10 @@ def edit_address(address_id):
     # get address from address id, check if user id matches logged in user
     selected_user = db.get_or_404(User, current_user.id)
     selected_address = db.get_or_404(Address, address_id)
-    # TODO update with data from form
     if request.method == "POST":
+        print(request.form)
         addressform = AddressForm(request.form)
+        print(addressform.data)
         if addressform.validate():
             selected_address.address_one = addressform.address_one.data
             selected_address.address_two = addressform.address_two.data
@@ -603,13 +604,11 @@ def edit_address(address_id):
             selected_address.city = addressform.city.data
             selected_address.postcode = addressform.postal_code.data
             selected_address.country = addressform.country.data
-            selected_address.phone_number = f"{addressform.phone_code.data} {addressform.phone_number.data}"
+            selected_address.phone_number = addressform.phone_number.data
             db.session.commit()
             return ""
 
     if selected_address in selected_user.customerDetails.addresses:
-        phone_code, phone_number = selected_address.phone_number.split(" ")
-        print(phone_code + "lol" + phone_number)
         return jsonify(
             {
                 "address": {
@@ -619,8 +618,7 @@ def edit_address(address_id):
                     "city": selected_address.city,
                     "postal_code": selected_address.postcode,
                     "country": selected_address.country,
-                    "phone_code": phone_code,
-                    "phone_number": phone_number,
+                    "phone_number": selected_address.phone_number
                 }
             }
         )

@@ -1,7 +1,15 @@
 {% include "header.html" %}
-<!-- <script type="text/javascript">
-  window.intlTelInputGlobals.loadUtils("https://cdn.jsdelivr.net/npm/intl-tel-input@18.2.1/build/js/utils.js");
-</script> -->
+<script type="text/javascript">
+  // Adapted from https://github.com/jackocnr/intl-tel-input/issues/921
+  // Also using jQuery document.ready to make loop run on page load
+  $(document).ready((event)=>{
+    window.intlTelInputGlobals.loadUtils("https://cdn.jsdelivr.net/npm/intl-tel-input@18.2.1/build/js/utils.js");
+    let editAddresses = document.querySelectorAll(".edit-address-number")
+    for(let i=0;i<editAddresses.length;i++){
+      EditIntlConverter(editAddresses[i])
+    }
+  })
+</script>
 <div class="card mb-4">
   <button id="edit-customerdetails-button" class="btn btn-primary w-100" data-bs-toggle="modal" data-bs-target="#edit-customerdetails-modal">Edit details</button>
     <div class="card-body text-center">
@@ -159,8 +167,8 @@
                       {{form.same_number.label(for="edit-same_number-"+address.id|string)}}
                   </div>
                   <div class="mb-3">
-                      {{form.phone_number.label(for="edit-phone_number-"+address.id|string)}}
-                      {{form.phone_number(id="edit-phone_number-"+address.id|string, class="form-control")}}
+                      {{form.phone_number.label(for="_edit-phone_number-"+address.id|string)}}
+                      {{form.phone_number(id="edit-phone_number-"+address.id|string, class="form-control edit-address-number")}}
                   </div>
                 </div>
                 <div class="modal-footer">
@@ -186,22 +194,30 @@
                 $("#edit-city-{{address.id}}").val(data.address.city)
                 $("#edit-postal_code-{{address.id}}").val(data.address.postal_code)
                 $("#edit-country-{{address.id}}").val(data.address.country)
-                $("#edit-phone_code-{{address.id}}").val(data.address.phone_code)
-                $("#edit-phone_number-{{address.id}}").val(data.address.phone_number)
+                //init intl tel input and set number to update
+                editAddressPhoneIti = window.intlTelInput(document.getElementById("_edit-phone_number-{{address.id}}"), {
+                  separateDialCode: true,
+                  utilsScript: "https://cdn.jsdelivr.net/npm/intl-tel-input@18.2.1/build/js/utils.js",
+                })
+                editAddressPhoneIti.setNumber(data.address.phone_number)
+                //jQuery works, vanilla should work as well but eh
+                $("#_edit-phone_number-{{address.id}}").on("blur", function() {
+                  $("#edit-phone_number-{{address.id}}").val(editAddressPhoneIti.getNumber())
+                })
               }
             )
+
           })
           
           $("#edit-address-{{address.id}}").submit(function(event){
             event.preventDefault();
 
-            if($("#edit-phone_number-{{address.id}}").attr("disabled")){
-              $("#edit-phone_number-{{address.id}}").removeAttr("disabled")
-              $("#edit-phone_code-{{address.id}}").removeAttr("disabled")
+            if($("#_edit-phone_number-{{address.id}}").attr("disabled")){
+              $("#_edit-phone_number-{{address.id}}").removeAttr("disabled")
             }
 
             $.post(
-              $(this).attr("action"),
+              "{{url_for('edit_address', address_id=address.id)}}",
               $(this).serialize(),
               function(data){
                 location.reload()
@@ -227,13 +243,14 @@
 
           $("#edit-same_number-{{address.id}}").change((event)=>{
             event.preventDefault();
+
             // https://stackoverflow.com/questions/43446641/jquery-attribute-exists-or-not
-            if(!($("#edit-phone_number-{{address.id}}").attr("disabled"))){
-              $("#edit-phone_number-{{address.id}}").attr("disabled", true)
-              $("#edit-phone_code-{{address.id}}").attr("disabled", true)
+            if(!($("#_edit-phone_number-{{address.id}}").attr("disabled"))){
+              $("#_edit-phone_number-{{address.id}}").attr("disabled", true)
+              editAddressPhoneIti.setNumber("{{user.customerDetails.phone_number}}")
             }else{
-              $("#edit-phone_number-{{address.id}}").removeAttr("disabled")
-              $("#edit-phone_code-{{address.id}}").removeAttr("disabled")
+              $("#_edit-phone_number-{{address.id}}").removeAttr("disabled")
+              editAddressPhoneIti.setNumber("{{address.phone_number}}")
             }
           })
         </script>
@@ -300,6 +317,7 @@
 <script type="text/javascript">
     //https://www.twilio.com/blog/a-phone-number-input-field-for-flask-forms
     //Hidden works, so set hidden and setup phone field to insert
+    //Everything done here instead of in func load because easier
     detailsPhoneField = document.getElementById("phone_number")
     detailsPhoneField.setAttribute("hidden", true)
     detailsPhoneField.parentElement.insertAdjacentHTML('beforeend', '<input type="tel" id="_phone_number" class="form-control">');
@@ -321,7 +339,7 @@
       if($("#_address-phone_number").attr("disabled")){
         $("#_address-phone_number").removeAttr("disabled")
       }
-      
+
       //just update it lmao
       $("#address-phone_number").val(addAddressPhoneIti.getNumber())
 
@@ -385,5 +403,13 @@
         }
       )
     })
+    // TODO see https://github.com/jackocnr/intl-tel-input/issues/921
+    // Only take parts for replacing wtform field with new input field
+    function EditIntlConverter(input){
+      let editAddressPhoneField = input
+      let pseudoId = editAddressPhoneField.getAttribute("id") //get id
+      editAddressPhoneField.setAttribute("hidden", true)
+      editAddressPhoneField.parentElement.insertAdjacentHTML('beforeend', `<input type="tel" id="_${pseudoId}" class="form-control">`);
+    }
 </script>
 {% include "footer.html" %}
