@@ -4,7 +4,6 @@ import jwt
 import datetime as dt
 from flask_login import LoginManager, current_user, login_user, logout_user
 import phonenumbers
-import pycountry
 from models import (
     Address,
     CustomerDetails,
@@ -36,7 +35,6 @@ from forms import (
     UserPasswordResetEmailForm,
     UserPasswordResetForm,
 )
-from sqlalchemy import func
 from werkzeug.security import generate_password_hash, check_password_hash
 from flask_bootstrap import Bootstrap5
 from helper_funcs import cart_merger, generate_list_id
@@ -695,7 +693,7 @@ def login():
         "login.html", form=loginform, current_user=current_user
     )
 
-
+@logged_in_check
 @app.route("/logout")
 def logout():
     logout_user()
@@ -758,7 +756,6 @@ def reset_password():
         selected_user = db.session.execute(
             db.select(User).where(User.email == emailform.email.data)
         ).scalar()
-        print(selected_user)
         # create jwt payload
         reset = {
             "username": selected_user.username,
@@ -781,9 +778,7 @@ def reset_password():
 
         # smtp send link+reset-token param and hash
         with smtplib.SMTP("smtp.gmail.com", port=587) as mailer:
-            message = f"""We've recieved a password reset request for your account
-                        Here's the link http://localhost:5000{url_for("validate_reset", reset_token=trunc_hash.token)}
-                        If you did not request this password reset to your account please ignore this email."""
+            message = f"We've recieved a password reset request for your account\nHere's the link http://localhost:5000{url_for("validate_reset", reset_token=trunc_hash.token)}\n\nIf you did not request this password reset to your account please ignore this email and consider changing your password."
             mailer.starttls()
             mailer.login(user=SENDER, password=SENDER_PASSWORD)
             mailer.sendmail(
@@ -799,54 +794,43 @@ def reset_password():
 @app.route("/users/validate-reset", methods=["GET", "POST"])
 def validate_reset():
     resetform = UserPasswordResetForm()
+
+    token = request.args.get("reset_token")
+
     try:
-        # try to get request token
-        token = request.args.get("reset_token")
-    except KeyError:
-        # flash link invalidity and redirect to reset screen
-        flash("The reset link is invalid.")
-        return redirect(url_for("reset_password"))
-    else:
         if resetform.validate_on_submit():
-            # reacquire token
-            token = resetform.token.data
-            # try to decode token
-            selected_token = db.session.execute(
-                db.select(ResetTokens).where(ResetTokens.token == token)
-            ).scalar()
-            decoded_token = jwt.decode(
-                token,
-                selected_token.username + selected_token.email,
-                ["HS256"],
-            )
-            # check if token is expired and flash if it is
-            if (
-                dt.datetime.fromtimestamp(decoded_token["exp"]).date()
-                < dt.datetime.now().date()
-            ):
-                flash("This password token has expired.")
-                return redirect(url_for("reset_password"))
-            # elif resetform.password.data != resetform.repeat.data:
-            #     flash("The passwords do not match, please try again.")
-            #     return redirect(url_for("validate_reset", token=token))
-            # Retrieve user with email
-            selected_user = db.session.execute(
-                db.select(User).where(User.email == decoded_token["email"])
-            ).scalar()
-            # Change password and update db
-            selected_user.password = generate_password_hash(
-                resetform.password.data
-            )
-            db.session.delete(selected_token)
-            db.session.commit()
+            if resetform.password.data==resetform.repeat.data:
+                selected_token = db.session.execute(
+                    db.select(ResetTokens).where(ResetTokens.token == resetform.token.data)
+                ).scalar()
+                decoded_token = jwt.decode(
+                    resetform.token.data,
+                    selected_token.username+selected_token.email,
+                    algorithms="HS256",
+                )
+                # Retrieve user with email
+                selected_user = db.session.execute(
+                    db.select(User).where(User.email == decoded_token["email"])
+                ).scalar()
+                # Change password and update db
+                selected_user.password = generate_password_hash(
+                    resetform.password.data
+                )
+                db.session.delete(selected_token)
+                db.session.commit()
 
-            # Render success page
-            return render_template("successful-reset.html")
-        return render_template(
-            "new-password.html", form=resetform, token=token
-        )
-
-    # TODO validate dual password input
+                # Render success page
+                return render_template("successful-reset.html")
+            else:
+                flash("Passwords must match")
+                return render_template("new-password.html", form=resetform, token=token)
+        return render_template("new-password.html", form=resetform, token=token)
+    except jwt.ExpiredSignatureError:
+        flash("This password token has expired")
+        return redirect(url_for("reset_password"))
+    except jwt.InvalidTokenError:
+        flash("This password token is invalid")
+        return redirect(url_for("reset_password"))
 
 
 if __name__ == "__main__":
