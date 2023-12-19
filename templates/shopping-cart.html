@@ -14,20 +14,19 @@
                       <h6 class="mb-0 text-muted">{{cart|length}} items</h6>
                     </div>
                     <hr class="my-4">
-  
-                    <!-- Shopping cart list start -->
-                    <!-- item["productref"] == product -->
-                    <!-- item["cartobj"] == item in cart -->
-                    {% if cart|length == 0 %}
-                    <h2>Your cart is currently empty!</h2>
-                    {% else %}
                     <script type="text/javascript">
                       const formatter = new Intl.NumberFormat('en-US',{
                         style:"currency",
                         currency:"USD"
                       })
                     </script>
+                    {% if cart|length == 0 %}
+                    <h2>Your cart is currently empty!</h2>
+                    {% else %}
                         {% for item in cart %}
+                        <!-- Shopping cart list start -->
+                        <!-- item["productref"] == product -->
+                        <!-- item["cartobj"] == item in cart -->
                         <div id="item-{{item['cartobj'].id}}" class="items row mb-4 d-flex justify-content-between align-items-center">
                           <div class="col-md-2 col-lg-2 col-xl-2">
                               <!-- <img
@@ -59,7 +58,7 @@
                               <h6 id="item-subtotal-{{item['cartobj'].id}}" class="mb-0">${{ '{0:.2f}'.format(item["productref"].price * item["cartobj"].quantity)}}</h6>
                           </div>
                           <div class="col-md-1 col-lg-1 col-xl-1 text-end">
-                              <button id="remove-cart-{{item['cartobj'].id}}" class="text-muted"><i class="fas fa-times">Remove</i></a>
+                              <button id="remove-cart-{{item['cartobj'].id}}" class="btn btn-outline-primary"><i class="fa-sharp fa-solid fa-trash"></i></a>
                           </div>
                         </div>
                         <script text="text/javascript">
@@ -112,7 +111,6 @@
                         </script>
                         {% endfor %}
                     <hr class="my-4">
-                    {% endif %}
                     <!-- Shopping cart list end -->
                   </div>
                 </div>
@@ -133,16 +131,17 @@
                         <h6 class="text-uppercase">Standard delivery</h6>
                         <h5>$10.00</h5>
                       </div>
-  
-                    <hr class="my-4">
-  
-                    <div class="d-flex justify-content-between mb-5">
-                      <h5 class="text-uppercase">Total price</h5>
-                      <h5 id="final-total">${{ '{0:.2f}'.format(subtotal|float+10)}}</h5>
-                    </div>
-  
-                    <a href="{{ url_for('show_checkout') }}"class="btn btn-dark btn-block btn-lg" data-mdb-ripple-color="dark">Checkout</a>
-
+                      
+                      <hr class="my-4">
+                      
+                      <div class="d-flex justify-content-between mb-5">
+                        <h5 class="text-uppercase">Total price</h5>
+                        <h5 id="final-total">${{ '{0:.2f}'.format(subtotal|float+10)}}</h5>
+                      </div>
+                      
+                      <a href="{{ url_for('show_checkout') }}"class="btn btn-dark btn-block btn-lg" data-mdb-ripple-color="dark">Checkout</a>
+                      {% endif %}
+                      
                     <!-- <button id="checkout" type="button" class="btn btn-dark btn-block btn-lg"
                       data-mdb-ripple-color="dark">Checkout</button>
                     <script type="text/javascript">
