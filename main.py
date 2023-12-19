@@ -4,7 +4,6 @@ import jwt
 import datetime as dt
 from flask_login import LoginManager, current_user, login_user, logout_user
 import phonenumbers
-import pycountry
 from models import (
     Address,
     CustomerDetails,
