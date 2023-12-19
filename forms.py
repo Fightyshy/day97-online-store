@@ -161,7 +161,7 @@ class ProductForm(FlaskForm):
     )
     # Upload from user's pc to server, save in same root as loc under assets/images
     # jpgs or pngs only, transform image to equiv 200x200px?
-    image = FileField("Image", validators=[FileAllowed(["jpg", "png"])])
+    image = FileField("Thumbnail Image (200x200px)", validators=[FileAllowed(["jpg", "png"], "JPG/PNG only")])
     category = SelectField(
         "Category",
         choices=[

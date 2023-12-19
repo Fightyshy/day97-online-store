@@ -1,4 +1,5 @@
 from functools import wraps
+import os
 import smtplib
 import jwt
 import datetime as dt
@@ -37,9 +38,11 @@ from forms import (
     UserPasswordResetForm,
 )
 from werkzeug.security import generate_password_hash, check_password_hash
+from werkzeug.utils import secure_filename
 from flask_bootstrap import Bootstrap5
 from helper_funcs import cart_merger, generate_list_id
 from sqlalchemy import and_, or_
+from flask_wtf.file import FileField
 import stripe
 
 # set static path and folder to serve
@@ -209,7 +212,6 @@ def product_control_panel():
     product_list = db.session.execute(db.select(Product)).scalars().all()
     productform = ProductForm()
 
-    # if request.method=="POST":
     if productform.validate_on_submit():
         product_uid = generate_list_id()
         while True:
@@ -224,11 +226,9 @@ def product_control_panel():
                 product_uid = generate_list_id()
             else:
                 break
-        set_image = (
-            "assets/images/defaultimage.jpg"
-            if productform.image.data == ""
-            else f"assets/images/{productform.image.data}"
-        )
+        # get image and secure filename
+        image = productform.image.data
+        set_image = "product-images/defaultimage.png" if image is None else "product-images/"+secure_filename(image.filename)
         new_product = Product(
             name=productform.name.data,
             product_uid=product_uid,
@@ -240,6 +240,9 @@ def product_control_panel():
         )
         db.session.add(new_product)
         db.session.commit()
+
+        # save image locally
+        image.save(os.path.join(app.root_path, "assets", set_image))
         return redirect(url_for("product_control_panel"))
 
     return render_template(
