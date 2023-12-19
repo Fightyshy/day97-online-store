@@ -35,6 +35,7 @@
                             <li><a class="dropdown-item" href="{{ url_for('user_control_panel') }}">User control panel</a></li>
                             {% endif %}
                         <li><a class="dropdown-item" href="{{ url_for('product_control_panel') }}">Product control panel</a></li>
+                        <li><a href="{{url_for('change_password')}}" class="dropdown-item">Change password</a></li>
                         {% endif %}
                         {% if current_user.role=="user" %}
                         <li><a class="dropdown-item" href="{{ url_for('show_shopping_cart') }}">Shopping Cart</a></li>
