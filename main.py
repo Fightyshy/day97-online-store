@@ -31,6 +31,7 @@ from forms import (
     ProductStockForm,
     UserEditRoleForm,
     UserForm,
+    UserPasswordChangeForm,
     UserRegistrationForm,
     UserPasswordResetEmailForm,
     UserPasswordResetForm,
@@ -748,6 +749,23 @@ def register():
         "register.html", form=registerform, current_user=current_user
     )
 
+@app.route("/users/change-password", methods=["GET", "POST"])
+def change_password():
+    passwordform = UserPasswordChangeForm()
+    if passwordform.validate_on_submit():
+        if passwordform.password.data == passwordform.repeat.data:
+            selected_user = db.get_or_404(User, current_user.id)
+            selected_user.password = generate_password_hash(passwordform.password.data)
+            db.session.commit()
+            if current_user.role=="user":
+                return redirect(url_for("show_user_details"))
+            else:
+                flash("Password has been changed")
+                return redirect(url_for("change_password"))
+        else:
+            flash("Passwords should match")
+            return render_template("change-password.html", form=passwordform)
+    return render_template("change-password.html", form=passwordform)
 
 @app.route("/users/reset-password", methods=["GET", "POST"])
 def reset_password():

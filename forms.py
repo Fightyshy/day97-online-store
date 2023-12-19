@@ -16,7 +16,14 @@ from wtforms import (
     TextAreaField,
     FormField,
 )
-from wtforms.validators import DataRequired, Email, Length, Regexp, NumberRange, ValidationError
+from wtforms.validators import (
+    DataRequired,
+    Email,
+    Length,
+    Regexp,
+    NumberRange,
+    ValidationError,
+)
 
 with open("assets/json/phone.json") as phone:
     data = json.load(phone)
@@ -45,9 +52,7 @@ class AddressForm(FlaskForm):
         "Phone number is same as in details",
         default=False,
     )
-    phone_number = StringField(
-        "Phone number"
-    )
+    phone_number = StringField("Phone number")
 
     # custom validator for phone numbers
     def validate_phone_number(self, phone_number):
@@ -55,8 +60,9 @@ class AddressForm(FlaskForm):
             number = phonenumbers.parse(phone_number.data)
             if not phonenumbers.is_valid_number(number):
                 raise ValueError()
-        except(phonenumbers.phonenumberutil.NumberParseException, ValueError):
+        except (phonenumbers.phonenumberutil.NumberParseException, ValueError):
             raise ValidationError("Invalid phone number entered")
+
     submit = SubmitField("Save address")
 
 
@@ -88,8 +94,9 @@ class CustomerDetailsForm(FlaskForm):
             number = phonenumbers.parse(phone_number.data)
             if not phonenumbers.is_valid_number(number):
                 raise ValueError()
-        except(phonenumbers.phonenumberutil.NumberParseException, ValueError):
+        except (phonenumbers.phonenumberutil.NumberParseException, ValueError):
             raise ValidationError("Invalid phone number entered")
+
     submit = SubmitField("Save details")
 
 
@@ -118,10 +125,14 @@ class UserPasswordResetEmailForm(FlaskForm):
     submit = SubmitField("Send reset link")
 
 
-class UserPasswordResetForm(FlaskForm):
-    token = HiddenField(validators=[DataRequired()])
+class UserPasswordChangeForm(FlaskForm):
     password = PasswordField("Password", validators=[DataRequired()])
     repeat = PasswordField("Repeat password", validators=[DataRequired()])
+    submit = SubmitField("Change password")
+
+
+class UserPasswordResetForm(UserPasswordChangeForm):
+    token = HiddenField(validators=[DataRequired()])
     submit = SubmitField("Reset password")
 
 
