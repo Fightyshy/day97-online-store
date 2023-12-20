@@ -69,6 +69,7 @@ SENDER = "testingtontester61@gmail.com"
 SENDER_PASSWORD = "dyuqvhdfhrexshoa"
 # Fill some random countries in the area
 ALLOWED = ["SG", "TH", "US", "GB", "JP", "MY", "AU"]
+DEFAULT_IMAGE = "product-images/defaultimage.png" 
 
 
 @login_manager.user_loader
@@ -228,7 +229,7 @@ def product_control_panel():
                 break
         # get image and secure filename
         image = productform.image.data
-        set_image = "product-images/defaultimage.png" if image is None else "product-images/"+secure_filename(image.filename)
+        set_image = DEFAULT_IMAGE if image is None else "product-images/"+secure_filename(image.filename)
         new_product = Product(
             name=productform.name.data,
             product_uid=product_uid,
@@ -270,13 +271,27 @@ def edit_product(product_id):
     selected_product = db.get_or_404(Product, product_id)
     # recieve post request
     if request.method == "POST":
-        productform = ProductForm(request.form)
+        # if you leave it alone, it will default the formdata to 
+        # request.form.data and request.form.files
+        # of the incoming request and fill the fields itself
+        productform = ProductForm()
         if productform.validate():
-            if productform.image.data is None:
-                set_image = f"assets/images/{productform.image.data}"
+            new_image = productform.image.data
+            current_image = selected_product.image.split("/")[-1]
+            # if not default and diff to current image
+            if current_image is not DEFAULT_IMAGE.split("/")[-1] and current_image != new_image.filename:
+                # del/prune current image from static if not DEFAULT_IMAGE
+                if current_image != DEFAULT_IMAGE.split("/")[-1]:
+                    print("here")
+                    print(os.path.join(app.root_path, "assets/product-images/", current_image))
+                    os.remove(os.path.join(app.root_path, "assets/product-images/", current_image))
+                # set new image
+                set_image = "product-images/"+secure_filename(new_image.filename)
+                new_image.save(os.path.join(app.root_path, "assets", set_image))
+                # set db record separately here
                 selected_product.image = set_image
-            else:
-                selected_product.image = productform.image.data
+                
+            
             # edit product from db contents with request
             selected_product.name = productform.name.data
             selected_product.description = productform.description.data
@@ -296,8 +311,7 @@ def edit_product(product_id):
                 "description": selected_product.description,
                 "price": selected_product.price,
                 "stock": selected_product.stock,
-                "category": selected_product.category,
-                "image": selected_product.image,
+                "category": selected_product.category
             },
         }
     )

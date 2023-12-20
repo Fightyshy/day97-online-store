@@ -165,8 +165,11 @@
             "{{url_for('edit_product', product_id=product.id)}}",
             {},
             function(data){
-              // cannot set image field, so we change label to prompt overwrite
-              $("[for='edit-image-{{product.id}}']").text("Image - Upload new image to overwrite old one")
+              // cannot set image field from local static, so no upload
+              // instead alter form label to notify result of action
+              // if CDN available, see https://stackoverflow.com/questions/1696877/how-to-set-a-value-to-a-file-input-in-html/70485949#70485949
+              // TODO acquire cheap CDN server :D
+              $("[for='edit-image-{{product.id}}']").text("Thumbnail Image (200x200px) - Upload new image to overwrite")
               $("#edit-name-{{product.id}}").val(data.product.name)
               $("#edit-price-{{product.id}}").val(data.product.price)
               $("#edit-stock-{{product.id}}").val(data.product.stock)
@@ -202,15 +205,24 @@
 
         $("#edit-product-{{product.id}}").submit(function(event){
           event.preventDefault();
-          $.post(
-            $(this).attr("action"),
-            $(this).serialize(),
-            function(data){
-              location.reload();
-              alert("Product {{product.product_uid}} has been updated")
-            }
-          )
-        });
+          //make formdata from form and append filefield to it 
+          // https://stackoverflow.com/questions/6974684/how-to-send-formdata-objects-with-ajax-requests-in-jquery
+          let editform = document.getElementById("edit-product-{{product.id}}");
+          let formData = new FormData(editform);
+          let image = document.getElementById("edit-image-{{product.id}}")
+          
+          $.ajax({
+              url: $(this).attr("action"),
+              data: formData,
+              processData: false, //jquery will not process form data
+              contentType: false, //jquery will not set contenttype for this req
+              type: 'POST',
+              success: function(data){
+                alert("Product {{product.product_uid}} has been updated")
+                location.reload();
+              }
+            });
+        })
       </script>
       {% endfor %}
   </table>
