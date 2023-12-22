@@ -3,7 +3,7 @@ import os
 import smtplib
 import jwt
 import datetime as dt
-from flask_login import LoginManager, current_user, login_user, logout_user
+from flask_login import LoginManager, current_user, login_required, login_user, logout_user
 import phonenumbers
 from models import (
     Address,
@@ -58,6 +58,7 @@ with app.app_context():
     db.create_all()
 
 login_manager = LoginManager()
+login_manager.login_view = "login"  # For redirect to login page
 login_manager.init_app(app)
 
 # stripe api key - currently public key
@@ -78,18 +79,6 @@ def load_user(user_id):
 
 
 # auth decorators
-def logged_in_check(f):
-    """Checks if a user is logged in, renders error page with a 403 error if not"""
-
-    @wraps(f)
-    def dec_func(*args, **kwargs):
-        if current_user.is_authenticated():
-            return f(*args, **kwargs)
-        else:
-            return render_template("error.html", status=403)
-
-    return dec_func
-
 
 def employee_check(f):
     """Checks if the current user is a admin or employee, renders error page with a 403 error if not"""
@@ -197,8 +186,9 @@ def show_product(product_id):
     )
 
 
-@employee_check
 @app.route("/products/delete-comment/<int:comment_id>")
+@employee_check
+@login_required
 def delete_comment(comment_id):
     selected_comment = db.get_or_404(Comment, comment_id)
     db.session.delete(selected_comment)
@@ -209,6 +199,8 @@ def delete_comment(comment_id):
 
 
 @app.route("/products/control-panel", methods=["GET", "POST"])
+@login_required
+@employee_check
 def product_control_panel():
     product_list = db.session.execute(db.select(Product)).scalars().all()
     productform = ProductForm()
@@ -251,8 +243,9 @@ def product_control_panel():
     )
 
 
-@employee_check
 @app.route("/products/edit-stock/<int:product_id>", methods=["GET", "POST"])
+@employee_check
+@login_required
 def edit_product_stock(product_id):
     selected_product = db.get_or_404(Product, product_id)
     if request.method == "POST":
@@ -264,8 +257,9 @@ def edit_product_stock(product_id):
     return jsonify({"product": {"stock": selected_product.stock}})
 
 
-@employee_check
 @app.route("/products/edit-product/<int:product_id>", methods=["GET", "POST"])
+@employee_check
+@login_required
 def edit_product(product_id):
     # get product from db
     selected_product = db.get_or_404(Product, product_id)
@@ -278,8 +272,8 @@ def edit_product(product_id):
         if productform.validate():
             new_image = productform.image.data
             current_image = selected_product.image.split("/")[-1]
-            # if not default and diff to current image
-            if current_image is not DEFAULT_IMAGE.split("/")[-1] and current_image != new_image.filename:
+            # if current image is not defaultimage and was uploaded
+            if current_image is not DEFAULT_IMAGE.split("/")[-1] and new_image is not None:
                 # del/prune current image from static if not DEFAULT_IMAGE
                 if current_image != DEFAULT_IMAGE.split("/")[-1]:
                     print("here")
@@ -318,8 +312,9 @@ def edit_product(product_id):
     return payload
 
 
-@admin_check
 @app.route("/products/delete-product/<int:product_id>")
+@admin_check
+@login_required
 def delete_product(product_id):
     selected_product = db.get_or_404(Product, product_id)
     db.session.delete(selected_product)
@@ -330,8 +325,8 @@ def delete_product(product_id):
 # shopping cart handling
 
 
-@logged_in_check
 @app.route("/shopping-cart")
+@login_required
 def show_shopping_cart():
     selected_user_cart = db.get_or_404(
         User, current_user.id
@@ -370,6 +365,7 @@ def show_shopping_cart():
 
 
 @app.route("/cart/checkout", methods=["GET", "POST"])
+@login_required
 def show_checkout():
     truecart = cart_merger(db, current_user)
     final_total = "{0:.2f}".format(
@@ -444,8 +440,8 @@ def create_checkout_session():
     return jsonify(clientSecret=session.client_secret)
 
 
-@logged_in_check
 @app.route("/checkout-success")
+@login_required
 def successful_payment():
     # get cart first for invoicing
     # clean shopping cart of user
@@ -461,8 +457,8 @@ def successful_payment():
     return render_template("successful_checkout.html")
 
 
-@logged_in_check
 @app.route("/cart/add-to-cart", methods=["POST"])
+@login_required
 def add_to_cart():
     if request.method == "POST":
         # for directly retrieving json
@@ -489,8 +485,8 @@ def add_to_cart():
     return ""
 
 
-@logged_in_check
 @app.route("/cart/remove-from-cart/<int:cart_id>", methods=["POST"])
+@login_required
 def remove_from_cart(cart_id):
     if request.method == "POST":
         selected_cart_item = db.get_or_404(ShoppingCart, cart_id)
@@ -499,8 +495,8 @@ def remove_from_cart(cart_id):
         return ""
 
 
-@logged_in_check
 @app.route("/cart/change-quantity", methods=["POST"])
+@login_required
 def change_product_quantity():
     if request.method == "POST":
         selected_cart_item = db.get_or_404(
@@ -514,8 +510,8 @@ def change_product_quantity():
 # user handling endpoints
 
 
-@logged_in_check
 @app.route("/user")
+@login_required
 def show_user_details():
     # get id, check logged in or admin
     selected_user = db.get_or_404(User, current_user.id)
@@ -531,14 +527,17 @@ def show_user_details():
     )
 
 
-@logged_in_check
 @app.route("/edit-user", methods=["GET", "POST"])
+@login_required
 def edit_user_details():
     # get user, checked if logged in or admin
     selected_user = db.get_or_404(User, current_user.id)
     if request.method == "POST":
         # validate and submit changes to server
         customerdetailsform = CustomerDetailsForm(request.form)
+        print(customerdetailsform.data)
+        print(customerdetailsform.errors)
+        print(customerdetailsform.validate())
         if customerdetailsform.validate():
             selected_user.customerDetails.first_name = (
                 customerdetailsform.first_name.data
@@ -569,8 +568,8 @@ def edit_user_details():
         )
 
 
-@logged_in_check
 @app.route("/user/add-address", methods=["POST"])
+@login_required
 def add_address():
     addressform = AddressForm(request.form)
     # form validate and commit to db under address
@@ -603,8 +602,8 @@ def add_address():
     return "form for adding new address"
 
 
-@logged_in_check
 @app.route("/user/edit-address/<int:address_id>", methods=["GET", "POST"])
+@login_required
 def edit_address(address_id):
     # get address from address id, check if user id matches logged in user
     selected_user = db.get_or_404(User, current_user.id)
@@ -640,8 +639,8 @@ def edit_address(address_id):
         )
 
 
-@logged_in_check
 @app.route("/user/delete-address/<int:address_id>")
+@login_required
 def delete_address(address_id):
     selected_address = db.get_or_404(Address, address_id)
     db.session.delete(selected_address)
@@ -652,8 +651,9 @@ def delete_address(address_id):
 # admin/employee control panel handling
 
 
-@employee_check
 @app.route("/users/control-panel", methods=["GET", "POST"])
+@employee_check
+@login_required
 def user_control_panel():
     # get all users
     user_list = db.session.execute(db.select(User)).scalars().all()
@@ -662,8 +662,9 @@ def user_control_panel():
     return render_template("user-control.html", users=user_list, form=roleform)
 
 
-@admin_check
 @app.route("/users/delete-user/<int:user_id>")
+@admin_check
+@login_required
 def delete_user(user_id):
     selected_user = db.get_or_404(User, user_id)
     db.session.delete(selected_user)
@@ -671,8 +672,9 @@ def delete_user(user_id):
     return redirect(url_for("user_control_panel"))
 
 
-@admin_check
 @app.route("/users/edit-role/<int:user_id>", methods=["POST"])
+@admin_check
+@login_required
 def edit_role(user_id):
     # handle AJAX
     if request.method == "POST":
@@ -711,8 +713,9 @@ def login():
         "login.html", form=loginform, current_user=current_user
     )
 
-@logged_in_check
+
 @app.route("/logout")
+@login_required
 def logout():
     logout_user()
     return redirect(url_for("home"))
@@ -767,6 +770,7 @@ def register():
     )
 
 @app.route("/users/change-password", methods=["GET", "POST"])
+@login_required
 def change_password():
     passwordform = UserPasswordChangeForm()
     if passwordform.validate_on_submit():
