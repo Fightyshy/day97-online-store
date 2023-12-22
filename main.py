@@ -571,9 +571,6 @@ def edit_user_details():
 def add_address():
     addressform = AddressForm(request.form)
     # form validate and commit to db under address
-    print(addressform.data)
-    print(addressform.validate_on_submit())
-    print(addressform.errors)
     if addressform.validate_on_submit():
         # Get user
         selected_user = db.get_or_404(User, current_user.id)
@@ -610,9 +607,7 @@ def edit_address(address_id):
     selected_user = db.get_or_404(User, current_user.id)
     selected_address = db.get_or_404(Address, address_id)
     if request.method == "POST":
-        print(request.form)
         addressform = AddressForm(request.form)
-        print(addressform.data)
         if addressform.validate():
             selected_address.address_one = addressform.address_one.data
             selected_address.address_two = addressform.address_two.data
