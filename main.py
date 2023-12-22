@@ -85,7 +85,7 @@ def employee_check(f):
 
     @wraps(f)
     def dec_func(*args, **kwargs):
-        if current_user.is_authenticated() and (
+        if current_user.is_authenticated and (
             current_user.role == "admin" or "employee"
         ):
             return f(*args, **kwargs)
@@ -100,7 +100,7 @@ def admin_check(f):
 
     @wraps(f)
     def dec_func(*args, **kwargs):
-        if current_user.is_authenticated() and (current_user.role == "admin"):
+        if current_user.is_authenticated and (current_user.role == "admin"):
             return f(*args, **kwargs)
         else:
             return render_template("error.html", status=403)
