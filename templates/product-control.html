@@ -14,14 +14,23 @@
             <div class="mb-3">
               {{ form.name.label(class="form-label", for="name") }}
               {{ form.name(class="form-control") }}
+              <div class="invalid-feedback">
+                Please enter the product's name
+              </div>
             </div>
             <div class="mb-3">
               {{ form.price.label(class="form-label", for="price") }}
               {{ form.price(class="form-control") }}
+              <div class="invalid-feedback">
+                Please enter the price of the product
+              </div>
             </div>
             <div class="mb-3">
               {{ form.stock.label(class="form-label", for="stock") }}
               {{ form.stock(class="form-control") }}
+              <div class="invalid-feedback">
+                You must enter an initial stock quantity
+              </div>
             </div>
             <div class="mb-3">
               {{ form.category.label(class="form-label", for="category") }}
@@ -34,6 +43,9 @@
             <div class="mb-3">
               {{ form.description.label(for="description") }}
               {{ form.description(class="form-control", style="resize: none;height: 20em") }}
+              <div class="invalid-feedback">
+                Please enter the product's description
+              </div>
             </div>
           </div>
           <div class="modal-footer">
@@ -89,14 +101,23 @@
                 <div class="mb-3">
                   {{ form.name.label(class="form-label", for="edit-name-"+product.id|string) }}
                   {{ form.name(id="edit-name-"+product.id|string, class="form-control") }}
+                  <div class="invalid-feedback">
+                    The product can not have no name
+                  </div>
                 </div>
                 <div class="mb-3">
                   {{ form.price.label(class="form-label", for="edit-price-"+product.id|string) }}
                   {{ form.price(id="edit-price-"+product.id|string, class="form-control") }}
+                  <div class="invalid-feedback">
+                    The product must have a price higher than 1
+                  </div>
                 </div>
                 <div class="mb-3">
                   {{ form.stock.label(class="form-label", for="edit-stock-"+product.id|string) }}
                   {{ form.stock(id="edit-stock-"+product.id|string, class="form-control") }}
+                  <div class="invalid-feedback">
+                    The product must have a stock higher than 1
+                  </div>
                 </div>
                 <div class="mb-3">
                   {{ form.category.label(class="form-label", for="edit-category-"+product.id|string) }}
@@ -109,6 +130,9 @@
                 <div class="mb-3">
                   {{ form.description.label(class="form-label", for="edit-description-"+product.id|string) }}
                   {{ form.description(id="edit-description-"+product.id|string, class="form-control", style="resize: none;height: 20em") }}
+                  <div class="invalid-feedback">
+                    The product must still have a description of up to 500 characters
+                  </div>
                 </div>
               </div>
               <div class="modal-footer">
@@ -204,14 +228,18 @@
         })
 
         $("#edit-product-{{product.id}}").submit(function(event){
-          event.preventDefault();
-          //make formdata from form and append filefield to it 
-          // https://stackoverflow.com/questions/6974684/how-to-send-formdata-objects-with-ajax-requests-in-jquery
-          let editform = document.getElementById("edit-product-{{product.id}}");
-          let formData = new FormData(editform);
-          let image = document.getElementById("edit-image-{{product.id}}")
-          
-          $.ajax({
+          // if(!document.getElementById("edit-product-{{product.id}}").checkValidity()){
+          //   event.preventDefault();
+          //   event.stopPropagation()
+          // }else{
+            event.preventDefault();
+            //make formdata from form and append filefield to it 
+            // https://stackoverflow.com/questions/6974684/how-to-send-formdata-objects-with-ajax-requests-in-jquery
+            let editform = document.getElementById("edit-product-{{product.id}}");
+            let formData = new FormData(editform);
+            let image = document.getElementById("edit-image-{{product.id}}")
+            
+            $.ajax({
               url: $(this).attr("action"),
               data: formData,
               processData: false, //jquery will not process form data
@@ -222,9 +250,23 @@
                 location.reload();
               }
             });
-        })
+          })
+          // document.getElementById("edit-product-{{product.id}}").classList.add("was-validated")
+          // })
       </script>
       {% endfor %}
+      <!-- until such as time as bs5 validation works for prepop forms, disable all here -->
+      <!-- <script type="text/javascript">
+          //bootstrap browser validation
+          // let form = document.getElementsByClassName("needs-validation")[0]
+          document.getElementById("add-product").addEventListener("submit", event =>{
+              if(!document.getElementById("add-product").checkValidity()){
+                  event.preventDefault()
+                  event.stopPropagation()
+              }
+              document.getElementById("add-product").classList.add("was-validated")
+          }, false)
+      </script> -->
   </table>
 
 </div>
