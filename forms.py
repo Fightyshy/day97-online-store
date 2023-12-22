@@ -15,6 +15,7 @@ from wtforms import (
     SubmitField,
     TextAreaField,
     FormField,
+    TelField
 )
 from wtforms.validators import (
     DataRequired,
@@ -52,7 +53,7 @@ class AddressForm(FlaskForm):
         "Phone number is same as in details",
         default=False,
     )
-    phone_number = StringField("Phone number")
+    phone_number = TelField("Phone number", validators=[DataRequired()])
 
     # custom validator for phone numbers
     def validate_phone_number(self, phone_number):
@@ -86,7 +87,7 @@ class CustomerDetailsForm(FlaskForm):
     first_name = StringField("First name", validators=[DataRequired()])
     last_name = StringField("Last name", validators=[DataRequired()])
     date_of_birth = DateField("Date of birth", validators=[DataRequired()])
-    phone_number = StringField("Phone number", validators=[DataRequired()])
+    phone_number = TelField("Phone number", validators=[DataRequired()])
 
     # custom validator for phone numbers
     def validate_phone_number(self, phone_number):

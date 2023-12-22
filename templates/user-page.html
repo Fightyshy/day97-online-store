@@ -9,6 +9,21 @@
       EditIntlConverter(editAddresses[i])
     }
   })
+
+  function intlTelValidationConverter(errorcode){
+    switch(errorcode){
+      case intlTelInputUtils.validationError.TOO_SHORT:
+        return "The phone number is too short"
+      case intlTelInputUtils.validationError.INVALID_COUNTRY_CODE:
+        return "The country code provided is invalid"
+      case intlTelInputUtils.validationError.TOO_LONG:
+        return "The phone number is too long"
+      case intlTelInputUtils.validationError.INVALID_LENGTH:
+        return "The length of the phone number is wrong"
+      default:
+        return "The phone number is invalid"
+    }
+  }
 </script>
 <div class="card mb-4">
   <button id="edit-customerdetails-button" class="btn btn-primary w-100" data-bs-toggle="modal" data-bs-target="#edit-customerdetails-modal">Edit details</button>
@@ -65,18 +80,30 @@
             <div class="mb-3">
                 {{detailform.first_name.label}}
                 {{detailform.first_name(class="form-control")}}
+                <div class="invalid-feedback">
+                  Please enter your first/given name
+                </div>
               </div>
             <div class="mb-3">
                 {{detailform.last_name.label}}
                 {{detailform.last_name(class="form-control")}}
+                <div class="invalid-feedback">
+                  Please enter your last/surname
+                </div>
               </div>
             <div class="mb-3">
                 {{detailform.date_of_birth.label}}
                 {{detailform.date_of_birth(class="form-control")}}
+                <div class="invalid-feedback">
+                  You need to enter your date of birth
+                </div>
               </div>
-            <div class="mb-3 input-group">
-                {{detailform.phone_number.label(for="_phone_number", class="input-group-text")}}
-                {{detailform.phone_number(class="form-control")}}
+            <div class="mb-3 form-group input-group">
+                {{detailform.phone_number.label(for="phone_number", class="input-group-text")}}
+                {{detailform.phone_number(style="height:2.4rem; width: 21rem;border: 0.1rem solid #ccc; border-radius: 0.3rem;")}}
+                <div id="details-invalid-number" class="invalid-feedback">
+                  Invalid phone number
+                </div>
               </div>
             </div>
             <div class="modal-footer">
@@ -269,12 +296,15 @@
               <h1 class="modal-title fs-5" id="add-address-modal-label">Add address</h1>
               <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
             </div>
-            <form id="add-address" action="{{url_for('add_address')}}" method="post">
+            <form id="add-address" class="needs-validation" action="{{url_for('add_address')}}" method="post" novalidate>
               {{form.csrf_token}}
               <div class="modal-body">
                 <div class="mb-3">
                     {{form.address_one.label}}
                     {{form.address_one(class="form-control")}}
+                    <div class="invalid-feedback">
+                      You need to enter a address line
+                    </div>
                 </div>
                 <div class="mb-3">
                     {{form.address_two.label}}
@@ -283,6 +313,9 @@
                 <div class="mb-3">
                     {{form.country.label}}
                     {{form.country(class="form-control")}}
+                    <div class="invalid-feedback">
+                      Please select a country
+                    </div>
                 </div>
                 <div class="mb-3">
                     {{form.state.label}}
@@ -291,18 +324,27 @@
                 <div class="mb-3">
                     {{form.city.label}}
                     {{form.city(class="form-control")}}
+                    <div class="invalid-feedback">
+                      Please enter an city
+                    </div>
                 </div>
                 <div class="mb-3">
                     {{form.postal_code.label}}
                     {{form.postal_code(class="form-control")}}
+                    <div class="invalid-feedback">
+                      Please enter a post code/zip code
+                    </div>
                 </div>
                 <div class="mb-3">
                     {{form.same_number}}
                     {{form.same_number.label}}
                 </div>
-                <div class="mb-3 input-group">
-                    {{form.phone_number.label(for="_address-phone_number", class="input-group-text")}}
-                    {{form.phone_number(id="address-phone_number", class="form-control")}}
+                <div class="mb-3 form-group input-group">
+                    {{form.phone_number.label(for="address-phone_number", class="input-group-text")}}
+                    {{form.phone_number(id="address-phone_number", style="height:2.4rem; width: 21rem;border: 0.1rem solid #ccc; border-radius: 0.3rem;")}}
+                    <div id="address-invalid-number" class="invalid-feedback">
+                      Please enter your first/given name
+                    </div>
                 </div>
               </div>
               <div class="modal-footer">
@@ -317,53 +359,61 @@
 <!-- TODO scripts for post/ajax -->
 <script type="text/javascript">
     //https://www.twilio.com/blog/a-phone-number-input-field-for-flask-forms
-    //Hidden works, so set hidden and setup phone field to insert
     //Everything done here instead of in func load because easier
-    detailsPhoneField = document.getElementById("phone_number")
-    detailsPhoneField.setAttribute("hidden", true)
-    detailsPhoneField.parentElement.insertAdjacentHTML('beforeend', '<input type="tel" id="_phone_number" class="form-control">');
-    let IntlDetailPhoneField = document.getElementById('_phone_number');
+    //Update with no field substitution, just set field manually but use the same names as in form
+    let IntlDetailPhoneField = document.getElementById('phone_number');
   
-    addAddressPhoneField = document.getElementById("address-phone_number")
-    addAddressPhoneField.setAttribute("hidden", true)
-    addAddressPhoneField.parentElement.insertAdjacentHTML("beforeend", "<input type='tel' id='_address-phone_number' class='form-control'>");
-    let IntlAddressPhoneField = document.getElementById("_address-phone_number")
+    // refer to these 2 for how to get bs5 validation working with intl tel inputs
+    // https://github.com/jackocnr/intl-tel-input/issues/970
+    // https://codepen.io/jonmnoj/pen/bGpdadY
+    let IntlAddressPhoneField = document.getElementById("address-phone_number")
     let addAddressPhoneIti = window.intlTelInput(IntlAddressPhoneField, {
-      separateDialCode: true,
-      utilsScript: "https://cdn.jsdelivr.net/npm/intl-tel-input@18.2.1/build/js/utils.js",
-    });
+        separateDialCode: true,
+        utilsScript: "https://cdn.jsdelivr.net/npm/intl-tel-input@18.2.1/build/js/utils.js"
+      });
 
     $("#add-address").submit(function(event){
       event.preventDefault();
       // https://stackoverflow.com/questions/6162573/jquery-form-serialize-returns-an-empty-string
       // Can't be disabled to submit properly
-      if($("#_address-phone_number").attr("disabled")){
-        $("#_address-phone_number").removeAttr("disabled")
+      if($("#address-phone_number").attr("disabled")){
+        $("#address-phone_number").removeAttr("disabled")
       }
-
-      //just update it lmao
-      $("#address-phone_number").val(addAddressPhoneIti.getNumber())
-
-      $.post(
-        "{{url_for('add_address')}}",
-        $(this).serialize(),
-        function(data, status){
-          if(status){
-            alert("Address has been added")
-            location.reload()
+      document.getElementById("add-address").classList.add("was-validated")
+      if(!document.getElementById("add-address").checkValidity()){
+        if(!window.intlTelInputGlobals.getInstance(document.getElementById("address-phone_number")).isValidNumber()){
+          $("#address-phone_number").parent().parent().children(".invalid-feedback").text(intlTelValidationConverter(window.intlTelInputGlobals.getInstance(document.getElementById("address-phone_number")).getValidationError()))
+          if(document.getElementById("add-address").classList.contains("was-validated")){
+            $("#address-invalid-number").show()
           }
-        }
-      )
+          }else{
+            $("#address-invalid-number").hide()
+          }
+        event.stopPropagation()
+      }else{
+        $("#address-invalid-number").hide()
+        $("#address-phone_number").val(addAddressPhoneIti.getNumber())
+        $.post(
+          "{{url_for('add_address')}}",
+          $(this).serialize(),
+          function(data, status){
+            if(status){
+              alert("Address has been added")
+              location.reload()
+            }
+          }
+        )
+      }
     })
 
     $("#same_number").change((event)=>{
       event.preventDefault();
       // https://stackoverflow.com/questions/43446641/jquery-attribute-exists-or-not
-      if(!($("#_address-phone_number").attr("disabled"))){
-        $("#_address-phone_number").attr("disabled", true)
+      if(!($("#phone_number").attr("disabled"))){
+        $("#phone_number").attr("disabled", true)
         addAddressPhoneIti.setNumber("{{user.customerDetails.phone_number}}")
       }else{
-        $("#_address-phone_number").removeAttr("disabled")
+        $("#phone_number").removeAttr("disabled")
         addAddressPhoneIti.setNumber("")
         addAddressPhoneIti.setCountry("us")
       }
@@ -382,7 +432,7 @@
           //init and populate field
           let detailsPhoneIti = window.intlTelInput(IntlDetailPhoneField, {
             separateDialCode: true,
-            utilsScript: "https://cdn.jsdelivr.net/npm/intl-tel-input@18.2.1/build/js/utils.js",
+            utilsScript: "https://cdn.jsdelivr.net/npm/intl-tel-input@18.2.1/build/js/utils.js"
           });
           detailsPhoneIti.setNumber(data.customerDetails.phone_number)
           IntlDetailPhoneField.addEventListener('blur', function() {
@@ -394,16 +444,31 @@
 
     $("#edit-customerdetails").submit(function(event){
       event.preventDefault();
-
-      $.post(
-        "{{url_for('edit_user_details')}}",
-        $(this).serialize(),
-        function(data){
-          alert("Your details have been updated!")
-          location.reload()
+      document.getElementById("edit-customerdetails").classList.add("was-validated")
+      
+      if(!document.getElementById("edit-customerdetails").checkValidity()){
+        if(!window.intlTelInputGlobals.getInstance(document.getElementById("phone_number")).isValidNumber()){
+          $("#phone_number").parent().parent().children(".invalid-feedback").text(intlTelValidationConverter(window.intlTelInputGlobals.getInstance(document.getElementById("phone_number")).getValidationError()))
+          if(document.getElementById("edit-customerdetails").classList.contains("was-validated")){
+            $("#details-invalid-number").show()
+          }
+        }else{
+          $("#details-invalid-number").hide()
         }
-      )
+        event.stopPropagation()
+      }else{
+        $.post(
+          "{{url_for('edit_user_details')}}",
+          $(this).serialize(),
+          function(data){
+            alert("Your details have been updated!")
+            location.reload()
+          }
+        )
+      }
+
     })
+
     // TODO see https://github.com/jackocnr/intl-tel-input/issues/921
     // Only take parts for replacing wtform field with new input field
     function EditIntlConverter(input){

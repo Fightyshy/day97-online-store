@@ -536,8 +536,6 @@ def edit_user_details():
         # validate and submit changes to server
         customerdetailsform = CustomerDetailsForm(request.form)
         print(customerdetailsform.data)
-        print(customerdetailsform.errors)
-        print(customerdetailsform.validate())
         if customerdetailsform.validate():
             selected_user.customerDetails.first_name = (
                 customerdetailsform.first_name.data
@@ -573,6 +571,9 @@ def edit_user_details():
 def add_address():
     addressform = AddressForm(request.form)
     # form validate and commit to db under address
+    print(addressform.data)
+    print(addressform.validate_on_submit())
+    print(addressform.errors)
     if addressform.validate_on_submit():
         # Get user
         selected_user = db.get_or_404(User, current_user.id)
