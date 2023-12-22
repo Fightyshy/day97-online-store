@@ -107,6 +107,22 @@ def admin_check(f):
 
     return dec_func
 
+# error code pages
+# https://flask.palletsprojects.com/en/3.0.x/errorhandling/#custom-error-pages
+
+
+@app.errorhandler(404)
+def not_found(e):
+    return render_template("error.html", error="The requested page was not found"), 404
+
+@app.errorhandler(500)
+def server_error(e):
+    return render_template("error.html", error="A error has occured on our end"), 500
+
+@app.error(403)
+def unauth(e):
+    return render_template("error.html", "You are not authorised to access this area of the website")
+
 
 # product handling
 @app.route("/")

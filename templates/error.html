@@ -1,11 +1,13 @@
 {% include "header.html" %}
-
-<div class="px-3">
-    <h1>Cover your page.</h1>
-    <p class="lead">Cover is a one-page template for building simple and beautiful home pages. Download, edit the text, and add your own fullscreen background photo to make it your own.</p>
-    <p class="lead">
-        <a href="#" class="btn btn-lg btn-light fw-bold border-white bg-white">Learn more</a>
-    </p>
+<div class="d-flex h-100 text-center text-bg-dark">
+    <div class="cover-container d-flex w-100 h-100 p-3 mx-auto flex-column">
+        <main class="px-3">
+        <h1>It seems something has gone wrong!</h1>
+        <p class="lead">{{error}}, you can take the link below to return to the home page.</p>
+        <p class="lead">
+            <a href="{{url_for('home')}}" class="btn btn-lg btn-light fw-bold border-white bg-white">Return home</a>
+        </p>
+        </main>
+    </div>
 </div>
-
 {% include "footer.html" %}
