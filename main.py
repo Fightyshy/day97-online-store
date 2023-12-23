@@ -497,8 +497,12 @@ def successful_payment():
         db.session.delete(delete_item)
     db.session.commit()
 
+    for order in order_items:
+        selected_product = db.session.execute(db.select(Product).where(Product.product_uid==order.product_uid)).scalar()
+        selected_product.stock -= order.quantity
+    db.session.commit()
+
     # re-selected committed orders and present products based on uid
-    # grouped_orders = [{item.product_uid: db.session.execute(db.select(Order).where(Order.order_uid==item.order_uid)).scalars().all() for item in order_items}]
     grouped_order = db.session.execute(db.select(Order).where(Order.order_uid==order_items[0].order_uid)).scalars().all()
     present_products = {order.product_uid: db.session.execute(db.select(Product).where(Product.product_uid==order.product_uid)).scalar() for order in order_items}
     return render_template("successful_checkout.html", order=grouped_order, products=present_products, current_user=current_user)
