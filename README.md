@@ -12,3 +12,4 @@ This project can *not* perform the following functions:
 - Any post-payment actions (refunds/returns/payment error resolution)
 - Automatic order shippment status updates
 - Any advanced client or server-side form validation (post/zipcode formats, address formatting, name checking, etc)
+- Automatic item stock conflict resolution (i.e When a multiple customers are purchasing a product, and the last person's order is invalidated due to lack of existing stock)
