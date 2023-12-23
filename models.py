@@ -125,6 +125,7 @@ class Order(db.Model):
     __tablename__ = "orders"
 
     id: Mapped[int] = mapped_column(Integer, primary_key=True)
+    order_uid: Mapped[str] = mapped_column(String(length=10), nullable=False)
     product_uid: Mapped[str] = mapped_column(String(length=10), nullable=False)
     quantity: Mapped[int] = mapped_column(Integer, nullable=False)
     order_date: Mapped[dt.datetime] = mapped_column(

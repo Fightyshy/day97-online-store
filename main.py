@@ -472,15 +472,22 @@ def successful_payment():
     # set orders
     # https://stackoverflow.com/questions/3659142/bulk-insert-with-sqlalchemy-orm
     # TODO debug - insert error customer not being inserted properly
-    order_items = [
-        Order(
+    order_items = []
+    for item in cart_items:
+        while True:
+            new_order_uid = generate_list_id()
+            if db.session.execute(db.select(Order).where(Order.order_uid==new_order_uid)).scalar() is None:
+                break
+        invoice = Order(
+            order_uid=new_order_uid,
             product_uid=item.product_uid,
             quantity=item.quantity,
             delivery_date=dt.datetime.now()+dt.timedelta(hours=120),
             customer=selected_user.customerDetails,
             customer_id=selected_user.customerDetails.id
-        ) for item in cart_items
-    ]
+        )
+        order_items.append(invoice)
+
     db.session.bulk_save_objects(order_items)
     db.session.commit()
 
@@ -489,7 +496,27 @@ def successful_payment():
     for delete_item in cart_items:
         db.session.delete(delete_item)
     db.session.commit()
-    return render_template("successful_checkout.html")
+
+    # re-selected committed orders and present products based on uid
+    # grouped_orders = [{item.product_uid: db.session.execute(db.select(Order).where(Order.order_uid==item.order_uid)).scalars().all() for item in order_items}]
+    grouped_order = db.session.execute(db.select(Order).where(Order.order_uid==order_items[0].order_uid)).scalars().all()
+    present_products = {order.product_uid: db.session.execute(db.select(Product).where(Product.product_uid==order.product_uid)).scalar() for order in order_items}
+    return render_template("successful_checkout.html", order=grouped_order, products=present_products, current_user=current_user)
+
+
+@app.route("/user/orders")
+@login_required
+def customer_orders():
+    # db selection of all orders under user
+    selected_user = db.get_or_404(User, current_user.id)
+    selected_orders = db.session.execute(db.select(Order).join(Order.customer).where(CustomerDetails.id==selected_user.customerDetails.id)).scalars().all()
+
+    # group orders and under order_uid and get all unique products based on order's product_uid
+    grouped_orders = [{item.order_uid: db.session.execute(db.select(Order).where(Order.order_uid==item.order_uid)).scalars().all() for item in selected_orders}]
+    present_products = {order.product_uid: db.session.execute(db.select(Product).where(Product.product_uid==order.product_uid)).scalar() for order in selected_orders}
+    print(grouped_orders)
+    print(present_products)
+    return render_template("customer-orders.html", orders=grouped_orders, products=present_products, current_user=current_user)
 
 
 @app.route("/cart/add-to-cart", methods=["POST"])

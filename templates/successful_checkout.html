@@ -4,9 +4,53 @@
         <main class="px-3">
         <h1>Thank you for your purchase!</h1>
         <p class="lead">We're currently protecting your purchase with black magic to ensure your goods arrive unharmed.</p>
-        <p class="lead">
-            <a href="#" class="btn btn-lg btn-light fw-bold border-white bg-white">Check your order status here</a>
-        </p>
+        <div class="card" >
+            <div class="card-body mx-4 w-50 mx-auto">
+              <div class="container">
+                <div class="row w-50 mx-auto">
+                    <ul class="list-unstyled">
+                        <li class="text-black">{{current_user.customerDetails.first_name.title()}} {{current_user.customerDetails.last_name.title()}}</li>
+                        <li class="text-black mt-1">Order date: {{order[0].order_date}}</li>
+                        <li class="text-black mt-1">Estimated delivery date: {{order[0].delivery_date}}</li>
+                        <li class="text-black mt-1">Status: {{order[0].status.title()}}</li>
+                    </ul>
+                    <hr>
+                </div>
+                {% set totals = [] %}
+                {% for item in order %}
+                {% if totals.append(products[item.product_uid].price*(item.quantity)) %}{% endif %}
+                <div class="row w-50 mx-auto">
+                  <div class="col-xl-10">
+                    <p>{{products[item.product_uid].name}}</p>
+                  </div>
+                  <div class="col-xl-2">
+                    <p class="float-end">${{'{0:.2f}'.format(products[item.product_uid].price*(item.quantity))}}
+                    </p>
+                  </div>
+                  <hr>
+                </div>
+                {% endfor %}
+                <div class="row w-50 mx-auto">
+                    <div class="col-xl-10">
+                      <p>Shipping</p>
+                    </div>
+                    <div class="col-xl-2">
+                      <p class="float-end">$10.00
+                      </p>
+                    </div>
+                    <hr>
+                  </div>
+                <div class="row text-black w-50 mx-auto">
+                  <div class="col-xl-12">
+                    <p class="float-end fw-bold">Total: ${{'{0:.2f}'.format(totals | sum()+10) }}
+                    </p>
+                  </div>
+                  <hr style="border: 2px solid black;">
+                </div>
+          
+              </div>
+            </div>
+          </div>
         </main>
     </div>
 </div>

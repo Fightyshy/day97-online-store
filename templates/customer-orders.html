@@ -1,0 +1,74 @@
+{% include "header.html" %}
+<h2 class="w-50 mx-auto">Previous orders</h2>
+<div class="accordion w-50 mx-auto my-3">
+    {% for order in orders %}
+    {% for key, items in order.items() %}
+    <div class="accordion-item" id="order-accordion">
+      <h2 class="accordion-header">
+        <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#order-collapse-{{key}}" aria-expanded="false" aria-controls="order-collapse-{{key}}">
+          Order reference: {{key}} - Date order placed: {{items[0].order_date}}
+        </button>
+      </h2>
+      <div id="order-collapse-{{key}}" class="accordion-collapse collapse" data-bs-parent="#order-accordion">
+        <div class="accordion-body">
+          <!-- card here -->
+          <div class="card mx-auto w-100" >
+            <div class="card-body mx-4  mx-auto">
+              <div class="container">
+                <p class="my-5 mx-5" style="font-size: 30px;">Order Ref - {{key}}</p>
+                <div class="row w-50 mx-auto text-center">
+                  <ul class="list-unstyled">
+                    <li class="text-black">{{current_user.customerDetails.first_name.title()}} {{current_user.customerDetails.last_name.title()}}</li>
+                    <li class="text-black mt-1">Order date: {{items[0].order_date}}</li>
+                    <li class="text-black mt-1">Estimated delivery date: {{items[0].delivery_date}}</li>
+                    <li class="text-black mt-1">Status: {{items[0].status.title()}}</li>
+                    </ul>
+                    <hr>
+                </div>
+                {% set totals = [] %}
+
+                {% for item in items %}
+                <div class="row w-50 mx-auto">
+                    {% if totals.append(products[item.product_uid].price*(item.quantity)) %}{% endif %}
+                  <div class="col-xl-10">
+                    <p>{{products[item.product_uid].name}}</p>
+                  </div>
+                  <div class="col-xl-10">
+                    <p>Quantity - {{item.quantity}}</p>
+                  </div>
+                  <div class="col-xl-2">
+                    <p class="float-end">${{'{0:.2f}'.format(products[item.product_uid].price*(item.quantity))}}
+                    </p>
+                  </div>
+                  <hr>
+                </div>
+                {% endfor %}
+                <div class="row w-50 mx-auto">
+                    <div class="col-xl-10">
+                      <p>Shipping</p>
+                    </div>
+                    <div class="col-xl-2">
+                      <p class="float-end">$10.00
+                      </p>
+                    </div>
+                    <hr>
+                  </div>
+                <div class="row text-black w-50 mx-auto">
+                  <div class="col-xl-12">
+                    <p class="float-end fw-bold">Total: ${{'{0:.2f}'.format(totals | sum()+10) }}
+                    </p>
+                  </div>
+                  <hr style="border: 2px solid black;">
+                </div>
+          
+              </div>
+            </div>
+          </div>
+          <!-- Card end -->
+        </div>
+      </div>
+    </div>
+    {% endfor %}
+    {% endfor %}
+  </div>
+{% include "footer.html" %}
