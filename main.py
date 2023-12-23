@@ -8,6 +8,7 @@ import phonenumbers
 from models import (
     Address,
     CustomerDetails,
+    Order,
     ShoppingCart,
     db,
     Product,
@@ -44,10 +45,13 @@ from helper_funcs import cart_merger, generate_list_id
 from sqlalchemy import and_, or_
 from flask_wtf.file import FileField
 import stripe
+from dotenv import load_dotenv
+
+load_dotenv()  # User python_dotenv to load environmental variables from a file
 
 # set static path and folder to serve
 app = Flask(__name__, static_url_path="", static_folder="assets")
-app.config["SECRET_KEY"] = "8BYkEfBA6O6donzWlSihBXox7C0sKR6b"  # csrf
+app.config["SECRET_KEY"] = os.environ["CSRF_KEY"]  # csrf
 app.config["SQLALCHEMY_DATABASE_URI"] = "sqlite:///store.db"
 
 Bootstrap5(app)
@@ -62,12 +66,13 @@ login_manager.login_view = "login"  # For redirect to login page
 login_manager.init_app(app)
 
 # stripe api key - currently public key
-stripe.api_key = "sk_test_Ou1w6LVt3zmVipDVJsvMeQsc"
+stripe.api_key = 'sk_test_51ONsITEk3v1yt26zN3nFErzHwf8JOiZuHHMljdD8n9mTNVBQp738gDd3caJSQGla0OPj7dycXVXnGkp7LxC2CSBd00A0GnUgVH'
+# os.environ["STRIPE_API_KEY"]
 
 # consts
 # Temp email consts
-SENDER = "testingtontester61@gmail.com"
-SENDER_PASSWORD = "dyuqvhdfhrexshoa"
+SENDER = os.environ["EMAIL"]
+SENDER_PASSWORD = os.environ["EMAIL_PASSWORD"]
 # Fill some random countries in the area
 ALLOWED = ["SG", "TH", "US", "GB", "JP", "MY", "AU"]
 DEFAULT_IMAGE = "product-images/defaultimage.png" 
@@ -119,7 +124,7 @@ def not_found(e):
 def server_error(e):
     return render_template("error.html", error="A error has occured on our end"), 500
 
-@app.error(403)
+@app.errorhandler(403)
 def unauth(e):
     return render_template("error.html", "You are not authorised to access this area of the website")
 
@@ -459,16 +464,30 @@ def create_checkout_session():
 @app.route("/checkout-success")
 @login_required
 def successful_payment():
+    # Reciept emails cannot be sent without fully activating a Stripe account, so no email reciepts
     # get cart first for invoicing
     # clean shopping cart of user
     selected_user = db.get_or_404(User, current_user.id)
-    # https://stackoverflow.com/questions/48839482/deleting-list-of-items-in-sqlalchemy-flask
-    ShoppingCart.query.filter(
-        ShoppingCart.customer.has(
-            CustomerDetails.id == selected_user.customerDetails.id
-        )
-    ).delete()
+    cart_items = db.session.execute(db.select(ShoppingCart).join(ShoppingCart.customer).where(CustomerDetails.id==selected_user.customerDetails.id)).scalars().all()
+    # set orders
+    # https://stackoverflow.com/questions/3659142/bulk-insert-with-sqlalchemy-orm
+    # TODO debug - insert error customer not being inserted properly
+    order_items = [
+        Order(
+            product_uid=item.product_uid,
+            quantity=item.quantity,
+            delivery_date=dt.datetime.now()+dt.timedelta(hours=120),
+            customer=selected_user.customerDetails,
+            customer_id=selected_user.customerDetails.id
+        ) for item in cart_items
+    ]
+    db.session.bulk_save_objects(order_items)
+    db.session.commit()
 
+    # commit again for deletion
+    # https://stackoverflow.com/questions/61574366/flask-sqlalchemy-bulk-deleting-records
+    for delete_item in cart_items:
+        db.session.delete(delete_item)
     db.session.commit()
     return render_template("successful_checkout.html")
 

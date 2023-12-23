@@ -126,6 +126,7 @@ class Order(db.Model):
 
     id: Mapped[int] = mapped_column(Integer, primary_key=True)
     product_uid: Mapped[str] = mapped_column(String(length=10), nullable=False)
+    quantity: Mapped[int] = mapped_column(Integer, nullable=False)
     order_date: Mapped[dt.datetime] = mapped_column(
         Date(), nullable=False, default=dt.datetime.now().date()
     )
