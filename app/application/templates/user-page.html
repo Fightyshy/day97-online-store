@@ -263,17 +263,7 @@
             }
 
             document.getElementById("edit-address-{{address.id}}").classList.add("was-validated")
-            if(!document.getElementById("edit-address-{{address.id}}").checkValidity()){
-              if(!window.intlTelInputGlobals.getInstance(document.getElementById("edit-phone_number-{{address.id}}")).isValidNumber()){
-                $("#edit-phone_number-{{address.id}}").parent().parent().children(".invalid-feedback").text(intlTelValidationConverter(window.intlTelInputGlobals.getInstance(document.getElementById("edit-phone_number-{{address.id}}")).getValidationError()))
-                if(document.getElementById("edit-address-{{address.id}}").classList.contains("was-validated")){
-                  $("#edit-invalid-phone_number-{{address.id}}").show()
-                }
-              }else{
-                $("#edit-invalid-phone_number-{{address.id}}").hide()
-              }
-              event.stopPropagation()
-            }else{
+            if(document.getElementById("edit-address-{{address.id}}").checkValidity() && window.intlTelInputGlobals.getInstance(document.getElementById("edit-phone_number-{{address.id}}")).isValidNumber()){
               $("#edit-invalid-phone_number-{{address.id}}").hide()
               $("#edit-phone_number-{{address.id}}").val(window.intlTelInputGlobals.getInstance(document.getElementById("edit-phone_number-{{address.id}}")).getNumber())
               
@@ -284,7 +274,15 @@
                   alert("Address has been updated")
                   location.reload()
                 }
-                )
+              )
+            } else{
+                if(document.getElementById("edit-address-{{address.id}}").classList.contains("was-validated")){
+                  $("#edit-invalid-phone_number-{{address.id}}").show()
+                }
+                else{
+                  $("#edit-invalid-phone_number-{{address.id}}").hide()
+                }
+                event.stopPropagation();
             }
           })
 
