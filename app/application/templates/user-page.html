@@ -100,7 +100,7 @@
               </div>
             <div class="mb-3 form-group input-group">
                 {{detailform.phone_number.label(for="phone_number", class="input-group-text")}}
-                {{detailform.phone_number(style="height:2.4rem; width: 21rem;border: 0.1rem solid #ccc; border-radius: 0.3rem;")}}
+                {{detailform.phone_number(id="details-phone_number", style="height:2.4rem; width: 21rem;border: 0.1rem solid #ccc; border-radius: 0.3rem;")}}
                 <div id="details-invalid-number" class="invalid-feedback">
                   Invalid phone number
                 </div>
@@ -393,11 +393,14 @@
 </div>
 <!-- TODO scripts for post/ajax -->
 <script type="text/javascript">
-    //https://www.twilio.com/blog/a-phone-number-input-field-for-flask-forms
-    //Everything done here instead of in func load because easier
-    //Update with no field substitution, just set field manually but use the same names as in form
-    let IntlDetailPhoneField = document.getElementById('phone_number');
-  
+    // https://www.twilio.com/blog/a-phone-number-input-field-for-flask-forms
+    // Everything done here instead of in func load because easier
+    // Update with no field substitution, just set field manually but use the same names as in form 
+    let IntlDetailPhoneField = document.getElementById('details-phone_number');
+    let detailsPhoneIti = window.intlTelInput(IntlDetailPhoneField, {
+            separateDialCode: true,
+            utilsScript: "https://cdn.jsdelivr.net/npm/intl-tel-input@18.2.1/build/js/utils.js"
+          });
     // refer to these 2 for how to get bs5 validation working with intl tel inputs
     // https://github.com/jackocnr/intl-tel-input/issues/970
     // https://codepen.io/jonmnoj/pen/bGpdadY
@@ -465,13 +468,9 @@
           $("#date_of_birth").val(data.customerDetails.dob)
 
           //init and populate field
-          let detailsPhoneIti = window.intlTelInput(IntlDetailPhoneField, {
-            separateDialCode: true,
-            utilsScript: "https://cdn.jsdelivr.net/npm/intl-tel-input@18.2.1/build/js/utils.js"
-          });
           detailsPhoneIti.setNumber(data.customerDetails.phone_number)
           IntlDetailPhoneField.addEventListener('blur', function() {
-            $("#phone_number").val(detailsPhoneIti.getNumber())
+            $("#details-phone_number").val(detailsPhoneIti.getNumber())
           });
         }
       )
@@ -480,18 +479,11 @@
     $("#edit-customerdetails").submit(function(event){
       event.preventDefault();
       document.getElementById("edit-customerdetails").classList.add("was-validated")
-      
-      if(!document.getElementById("edit-customerdetails").checkValidity()){
-        if(!window.intlTelInputGlobals.getInstance(document.getElementById("phone_number")).isValidNumber()){
-          $("#phone_number").parent().parent().children(".invalid-feedback").text(intlTelValidationConverter(window.intlTelInputGlobals.getInstance(document.getElementById("phone_number")).getValidationError()))
-          if(document.getElementById("edit-customerdetails").classList.contains("was-validated")){
-            $("#details-invalid-number").show()
-          }
-        }else{
-          $("#details-invalid-number").hide()
-        }
-        event.stopPropagation()
-      }else{
+
+      if(document.getElementById("edit-customerdetails").checkValidity() && window.intlTelInputGlobals.getInstance(document.getElementById("details-phone_number")).isValidNumber()){
+        $("#details-invalid-number").hide()
+        $("#details-phone_number").val(detailsPhoneIti.getNumber())
+        
         $.post(
           "{{url_for('user_control.edit_user_details')}}",
           $(this).serialize(),
@@ -500,8 +492,16 @@
             location.reload()
           }
         )
+      }else{
+        $("#details-phone_number").parent().parent().children(".invalid-feedback").text(intlTelValidationConverter(window.intlTelInputGlobals.getInstance(document.getElementById("details-phone_number")).getValidationError()))
+        if(document.getElementById("edit-customerdetails").classList.contains("was-validated")){
+          $("#details-invalid-number").show()
+        }
+        else{
+          $("#details-invalid-number").hide()
+        }
+        event.stopPropagation()
       }
-
     })
 
     // TODO see https://github.com/jackocnr/intl-tel-input/issues/921
