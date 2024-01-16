@@ -5,7 +5,10 @@ from sqlalchemy import Date, Float, ForeignKey, Integer, String
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 import datetime as dt
 
-# https://stackoverflow.com/questions/9692962/flask-sqlalchemy-import-context-issue/9695045#9695045 for seperation of model from main
+# https://stackoverflow.com/questions/9692962/flask-sqlalchemy-import-context-issue/9695045#9695045
+# for seperation of model from main
+
+# declare here but init in create_app
 
 db = SQLAlchemy()
 

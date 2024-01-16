@@ -71,7 +71,7 @@
                                 "quantity":$(this).val()
                               }),
                               type: "POST",
-                              url: "{{url_for('change_product_quantity')}}",
+                              url: "{{url_for('shopping_cart.change_product_quantity')}}",
                               contentType: "application/json",
                               accepts: "application/json"
                             }).done(function(data){
@@ -94,7 +94,7 @@
                             event.preventDefault()
                             $.ajax({
                               type:"POST",
-                              url: "{{url_for('remove_from_cart', cart_id=item['cartobj'].id)}}"
+                              url: "{{url_for('shopping_cart.remove_from_cart', cart_id=item['cartobj'].id)}}"
                             }).done(function(data){
                               $("#item-{{item['cartobj'].id}}").remove()
 
@@ -139,14 +139,14 @@
                         <h5 id="final-total">${{ '{0:.2f}'.format(subtotal|float+10)}}</h5>
                       </div>
                       
-                      <a href="{{ url_for('show_checkout') }}"class="btn btn-dark btn-block btn-lg" data-mdb-ripple-color="dark">Checkout</a>
+                      <a href="{{ url_for('shopping_cart.show_checkout') }}"class="btn btn-dark btn-block btn-lg" data-mdb-ripple-color="dark">Checkout</a>
                       {% endif %}
                       
                     <!-- <button id="checkout" type="button" class="btn btn-dark btn-block btn-lg"
                       data-mdb-ripple-color="dark">Checkout</button>
                     <script type="text/javascript">
                       $("#checkout").click(function(event){
-                        window.location.href="{{url_for('show_checkout')}}"
+                        window.location.href="{{url_for('shopping_cart.show_checkout')}}"
                       })
                     </script> -->
                   </div>

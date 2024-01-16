@@ -9,7 +9,7 @@
         {% endfor %}
         {% endif %}
         {% endwith %}
-        <form id="regform" action="{{ url_for('register') }}" method="post" class="needs-validation" novalidate>
+        <form id="regform" action="{{ url_for('user_auth.register') }}" method="post" class="needs-validation" novalidate>
             {{ form.csrf_token }}
             {{ form.details.csrf_token }}
             <h1 class="h3 mb-3 fw-normal">Register</h1>

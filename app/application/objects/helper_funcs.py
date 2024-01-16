@@ -3,7 +3,7 @@ import string
 
 from flask_sqlalchemy import SQLAlchemy
 
-from models import Product, User
+from ..models.models import Product, User
 
 
 def generate_list_id():

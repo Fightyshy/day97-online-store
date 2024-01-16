@@ -1,5 +1,6 @@
 import datetime as dt
 import json
+from flask import url_for
 from flask_wtf import FlaskForm
 from flask_wtf.file import FileField, FileAllowed
 import phonenumbers
@@ -26,7 +27,7 @@ from wtforms.validators import (
     ValidationError,
 )
 
-with open("assets/json/phone.json") as phone:
+with open("application/static/assets/json/phone.json") as phone:
     data = json.load(phone)
 
 

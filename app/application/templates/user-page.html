@@ -27,7 +27,7 @@
 </script>
 <div class="card mb-4">
   <button id="edit-customerdetails-button" class="btn btn-primary w-100" data-bs-toggle="modal" data-bs-target="#edit-customerdetails-modal">Edit details</button>
-  <a href="{{url_for('change_password')}}" class="btn btn-primary w-100">Change password</a>  
+  <a href="{{url_for('user_auth.change_password')}}" class="btn btn-primary w-100">Change password</a>  
   <div class="card-body text-center">
         <div class="row">
             <div class="col-sm-3">
@@ -74,7 +74,7 @@
             <h1 class="modal-title fs-5" id="edit-customerdetails-modal-label">Edit details </h1>
             <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
           </div>
-          <form id="edit-customerdetails" action="{{url_for('edit_user_details')}}" method="post" novalidate>
+          <form id="edit-customerdetails" action="{{url_for('user_control.edit_user_details')}}" method="post" novalidate>
             <div class="modal-body">
               {{detailform.csrf_token}}
             <div class="mb-3">
@@ -151,7 +151,7 @@
 
               </address>
               <button id="edit-user-address-{{address.id}}" class="btn btn-primary w-100" data-bs-toggle="modal" data-bs-target="#edit-address-modal-{{address.id}}">Edit address</button>
-              <a href="{{url_for('delete_address', address_id=address.id)}}" id="delete-address-{{address.id}}" class="btn btn-danger w-100">Delete address</a>
+              <a href="{{url_for('user_control.delete_address', address_id=address.id)}}" id="delete-address-{{address.id}}" class="btn btn-danger w-100">Delete address</a>
             </div>
           </div>
         </div>
@@ -163,7 +163,7 @@
                 <h1 class="modal-title fs-5" id="edit-address-modal-label-{{address.id}}">Add address</h1>
                 <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
               </div>
-              <form id="edit-address-{{address.id}}" class="needs-validation" action="{{url_for('edit_address', address_id=address.id)}}" method="post" novalidate>
+              <form id="edit-address-{{address.id}}" class="needs-validation" action="{{url_for('user_control.edit_address', address_id=address.id)}}" method="post" novalidate>
                 <div class="modal-body">
                   {{form.csrf_token}}
                   <div class="mb-3">
@@ -227,7 +227,7 @@
             event.preventDefault();
 
             $.get(
-              "{{url_for('edit_address', address_id=address.id)}}",
+              "{{url_for('user_control.edit_address', address_id=address.id)}}",
               {},
               function(data){
                 $("#edit-address-modal-label-{{address.id}}").text("Edit address")
@@ -278,7 +278,7 @@
               $("#edit-phone_number-{{address.id}}").val(window.intlTelInputGlobals.getInstance(document.getElementById("edit-phone_number-{{address.id}}")).getNumber())
               
               $.post(
-                "{{url_for('edit_address', address_id=address.id)}}",
+                "{{url_for('user_control.edit_address', address_id=address.id)}}",
                 $(this).serialize(),
                 function(data){
                   alert("Address has been updated")
@@ -331,7 +331,7 @@
               <h1 class="modal-title fs-5" id="add-address-modal-label">Add address</h1>
               <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
             </div>
-            <form id="add-address" class="needs-validation" action="{{url_for('add_address')}}" method="post" novalidate>
+            <form id="add-address" class="needs-validation" action="{{url_for('user_control.add_address')}}" method="post" novalidate>
               {{form.csrf_token}}
               <div class="modal-body">
                 <div class="mb-3">
@@ -429,7 +429,7 @@
         $("#address-invalid-number").hide()
         $("#address-phone_number").val(addAddressPhoneIti.getNumber())
         $.post(
-          "{{url_for('add_address')}}",
+          "{{url_for('user_control.add_address')}}",
           $(this).serialize(),
           function(data, status){
             if(status){
@@ -457,7 +457,7 @@
     $("#edit-customerdetails-button").click((event)=>{
       event.preventDefault()
       $.get(
-        "{{url_for('edit_user_details')}}",
+        "{{url_for('user_control.edit_user_details')}}",
         {},
         (data)=>{
           $("#first_name").val(data.customerDetails.first_name)
@@ -493,7 +493,7 @@
         event.stopPropagation()
       }else{
         $.post(
-          "{{url_for('edit_user_details')}}",
+          "{{url_for('user_control.edit_user_details')}}",
           $(this).serialize(),
           function(data){
             alert("Your details have been updated!")

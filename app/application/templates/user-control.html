@@ -19,13 +19,14 @@
         {% if current_user.is_authenticated and current_user.role=="admin" %}
         <td scope="row">
           {% if user.role=="user" %}
+          <!-- TODO implement -->
           <a href="#" class="btn btn-primary">Edit user details</a>
           {% endif %}
           {% if current_user.id != user.id %}
           <button type="button" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#edit-role-modal-{{user.id}}">
             Edit role
           </button>
-          <a href="{{url_for('delete_user', user_id=user.id)}}" class="btn btn-primary">Delete user</a>
+          <a href="{{url_for('user_control.delete_user', user_id=user.id)}}" class="btn btn-primary">Delete user</a>
           {% endif %}
           <!-- Modal -->
           <div class="modal fade" id="edit-role-modal-{{user.id}}" tabindex="-1" aria-labelledby="edit-role-modal-{{user.id}}-label" aria-hidden="true">
@@ -35,7 +36,7 @@
                   <h1 class="modal-title fs-5" id="edit-role-modal-{{user.id}}-label">Modal title</h1>
                   <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
                 </div>
-                <form id="edit-role-{{user.id}}" action="{{url_for('edit_role', user_id=user.id)}}" method="post">
+                <form id="edit-role-{{user.id}}" action="{{url_for('user_control.edit_role', user_id=user.id)}}" method="post">
                   <div class="modal-body">
                     {{ form.csrf_token }}
                     <div class="form-control">
@@ -70,7 +71,7 @@
                 //We will refresh though because it makes more sense, not to mention it's easier
                 location.reload()
               })
-              eaent.preventDefault()
+              event.preventDefault()
             })
           </script>
         </td>

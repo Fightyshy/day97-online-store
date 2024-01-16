@@ -39,7 +39,7 @@
                     <h5 class="mb-0">{{ comment.customer.user.username }} - 
                         <small>{{comment.customer.first_name}} {{comment.customer.last_name}}</small>
                         {% if current_user.is_authenticated and (current_user.role=="admin" or current_user.role=="employee") %}
-                        <a class="btn btn-outline-primary" href="{{ url_for('delete_comment', comment_id=comment.id) }}">Delete</a>
+                        <a class="btn btn-outline-primary" href="{{ url_for('product_control.delete_comment', comment_id=comment.id) }}">Delete</a>
                         {% endif %}
                     </h5>
                     <h6> Rating - 
@@ -62,7 +62,7 @@
 <!-- New comment form -->
 {% if current_user.is_authenticated and current_user.role=="user" %}
 <section class="w-50 m-auto">
-    <form action="{{ url_for('show_product', product_id=product.id) }}" method="post">
+    <form action="{{ url_for('storefront.show_product', product_id=product.id) }}" method="post">
         {{ form.csrf_token }}
         <div class="mb-3 p-3 form-control">
             <h1 class="h3 mb-3 fw-normal">Leave a comment</h1>
@@ -90,7 +90,7 @@
                     "product_uid":"{{product.product_uid}}",
                     "quantity":quant
                 }),
-                url:"{{url_for('add_to_cart')}}",
+                url:"{{url_for('shopping_cart.add_to_cart')}}",
                 type:"POST",
                 contentType:"application/json",
                 accepts:"application/json"

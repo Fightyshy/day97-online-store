@@ -8,7 +8,7 @@
           <h1 class="modal-title fs-5" id="add-product-modal-label">Add product</h1>
           <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
         </div>
-        <form id="add-product" action="{{url_for('product_control_panel')}}" method="post" enctype="multipart/form-data">
+        <form id="add-product" action="{{url_for('product_control.product_control_panel')}}" method="post" enctype="multipart/form-data">
             {{ form.csrf_token }}
           <div class="modal-body">
             <div class="mb-3">
@@ -78,7 +78,7 @@
           <td>
             <button id="edit-stock-modal-button-{{product.id}}" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#edit-stock-modal-{{product.id}}">Edit stock</button>
             <button id="edit-product-modal-button-{{product.id}}" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#edit-product-modal-{{product.id}}">Edit product</button>
-            <a id="delete-product-{{product.product_uid}}" href="{{url_for('delete_product', product_id=product.id)}}" class="btn btn-danger">Delete product</a>
+            <a id="delete-product-{{product.product_uid}}" href="{{url_for('product_control.delete_product', product_id=product.id)}}" class="btn btn-danger">Delete product</a>
           </td>
         </tr>
       </tbody>
@@ -95,7 +95,7 @@
             <!-- each edit modal has it's own unique name based on db id, maybe swap to product uid? -->
             <!-- Solution pieced together with the 3 SO questions -->
             <!-- No, it's not clean, but it works -->
-            <form id="edit-product-{{product.id}}" action="{{url_for('edit_product', product_id=product.id)}}" method="post" enctype="multipart/form-data">
+            <form id="edit-product-{{product.id}}" action="{{url_for('product_control.edit_product', product_id=product.id)}}" method="post" enctype="multipart/form-data">
               <div class="modal-body">
                 {{ form.csrf_token }}
                 <div class="mb-3">
@@ -150,7 +150,7 @@
               <h1 class="modal-title fs-5" id="edit-stock-modal-{{product.id}}-label">Edit product</h1>
               <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
             </div>
-            <form id="edit-stock-form-{{product.id}}" action="{{url_for('edit_product_stock', product_id=product.id)}}" method="post">
+            <form id="edit-stock-form-{{product.id}}" action="{{url_for('product_control.edit_product_stock', product_id=product.id)}}" method="post">
               <div class="modal-body">
                 {{ form.csrf_token }}
                 <div class="mb-3">
@@ -175,8 +175,8 @@
               $(this).attr("href"),
               {},
               function(data){
-                location.reload();
                 alert("Product UID {{product.product_uid}} has been deleted")
+                location.reload();
               }
             )
           }
@@ -186,7 +186,7 @@
           event.preventDefault();
 
           $.get(
-            "{{url_for('edit_product', product_id=product.id)}}",
+            "{{url_for('product_control.edit_product', product_id=product.id)}}",
             {},
             function(data){
               // cannot set image field from local static, so no upload
@@ -207,7 +207,7 @@
           event.preventDefault();
 
           $.get(
-            "{{url_for('edit_product_stock', product_id=product.id)}}",
+            "{{url_for('product_control.edit_product_stock', product_id=product.id)}}",
             {},
             function(data){
               $("#edit-stock-quick-{{product.id}}").val(data.product.stock)
