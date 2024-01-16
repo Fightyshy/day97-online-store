@@ -245,11 +245,10 @@
                 // Everytime, call the instance instead of locking it to a variable
                 // I ask for the mercy of whoever has to read this hack
                 window.intlTelInputGlobals.getInstance(document.getElementById("edit-phone_number-{{address.id}}")).setNumber(data.address.phone_number)
-                console.log(window.intlTelInputGlobals.getInstance(document.getElementById("edit-phone_number-{{address.id}}")).getNumber())
                 //jQuery works, vanilla should work as well but eh
-                $("#edit-phone_number-{{address.id}}").on("blur", function() {
-                  $("#edit-phone_number-{{address.id}}").val(editAddressPhoneIti.getNumber())
-                })
+                // $("#edit-phone_number-{{address.id}}").on("blur", function() {
+                //   $("#edit-phone_number-{{address.id}}").val(editAddressPhoneIti.getNumber())
+                // })
               }
             )
 
@@ -389,7 +388,6 @@
         </div>
       </div>
 </div>
-<!-- TODO scripts for post/ajax -->
 <script type="text/javascript">
     // https://www.twilio.com/blog/a-phone-number-input-field-for-flask-forms
     // Everything done here instead of in func load because easier
@@ -502,7 +500,7 @@
       }
     })
 
-    // TODO see https://github.com/jackocnr/intl-tel-input/issues/921
+    // Eg. see https://github.com/jackocnr/intl-tel-input/issues/921
     // Only take parts for replacing wtform field with new input field
     // function EditIntlConverter(input){
     //   let editAddressPhoneField = input

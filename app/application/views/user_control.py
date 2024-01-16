@@ -38,22 +38,40 @@ def edit_user_details():
         # validate and submit changes to server
         customerdetailsform = CustomerDetailsForm(request.form)
         print(customerdetailsform.data)
-        # TODO fix formating
-        if customerdetailsform.validate():
-            selected_user.customerDetails.first_name = (
-                customerdetailsform.first_name.data
-            )
-            selected_user.customerDetails.last_name = (
-                customerdetailsform.last_name.data
-            )
-            selected_user.customerDetails.date_of_birth = (
-                customerdetailsform.date_of_birth.data
-            )
-            selected_user.customerDetails.phone_number = (
-                customerdetailsform.phone_number.data
-            )
-            db.session.commit()
-            return ""
+        if selected_user.role == "user":
+            # TODO fix formating
+            if customerdetailsform.validate():
+                selected_user.customerDetails.first_name = (
+                    customerdetailsform.first_name.data
+                )
+                selected_user.customerDetails.last_name = (
+                    customerdetailsform.last_name.data
+                )
+                selected_user.customerDetails.date_of_birth = (
+                    customerdetailsform.date_of_birth.data
+                )
+                selected_user.customerDetails.phone_number = (
+                    customerdetailsform.phone_number.data
+                )
+                db.session.commit()
+                return ""
+        elif selected_user.role != "user":
+            user_toEdit = db.get_or_404(User, request.args.get("user_id"))
+            if customerdetailsform.validate():
+                user_toEdit.customerDetails.first_name = (
+                    customerdetailsform.first_name.data
+                )
+                user_toEdit.customerDetails.last_name = (
+                    customerdetailsform.last_name.data
+                )
+                user_toEdit.customerDetails.date_of_birth = (
+                    customerdetailsform.date_of_birth.data
+                )
+                user_toEdit.customerDetails.phone_number = (
+                    customerdetailsform.phone_number.data
+                )
+                db.session.commit()
+                return ""
     if selected_user.role == "user":
         return jsonify(
             {
@@ -64,6 +82,21 @@ def edit_user_details():
                         "%Y-%m-%d"
                     ),
                     "phone_number": selected_user.customerDetails.phone_number
+                }
+            }
+        )
+    elif selected_user.role != "user":
+        user_toEdit = db.get_or_404(User, request.args.get("user_id"))
+        return jsonify(
+            {
+                "customerDetails": {
+                    "user_id": user_toEdit.id,
+                    "first_name": user_toEdit.customerDetails.first_name,
+                    "last_name": user_toEdit.customerDetails.last_name,
+                    "dob": user_toEdit.customerDetails.date_of_birth.strftime(
+                        "%Y-%m-%d"
+                    ),
+                    "phone_number": user_toEdit.customerDetails.phone_number
                 }
             }
         )
@@ -157,8 +190,9 @@ def user_control_panel():
     # get all users
     user_list = db.session.execute(db.select(User)).scalars().all()
     roleform = UserEditRoleForm()
+    detailsform = CustomerDetailsForm()
 
-    return render_template("user-control.html", users=user_list, form=roleform)
+    return render_template("user-control.html", users=user_list, form=roleform, detailform=detailsform)
 
 
 @user_control.route("/users/delete-user/<int:user_id>")

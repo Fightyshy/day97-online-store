@@ -20,7 +20,7 @@
         <td scope="row">
           {% if user.role=="user" %}
           <!-- TODO implement -->
-          <a href="#" class="btn btn-primary">Edit user details</a>
+          <button id="edit-customerdetails-button-{{user.id}}" type="button" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#edit-customerdetails-modal-{{user.id}}">Edit user details</a>
           {% endif %}
           {% if current_user.id != user.id %}
           <button type="button" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#edit-role-modal-{{user.id}}">
@@ -28,7 +28,7 @@
           </button>
           <a href="{{url_for('user_control.delete_user', user_id=user.id)}}" class="btn btn-primary">Delete user</a>
           {% endif %}
-          <!-- Modal -->
+          <!-- Modal edit role -->
           <div class="modal fade" id="edit-role-modal-{{user.id}}" tabindex="-1" aria-labelledby="edit-role-modal-{{user.id}}-label" aria-hidden="true">
             <div class="modal-dialog">
               <div class="modal-content">
@@ -53,6 +53,57 @@
               </div>
             </div>
           </div>
+          <!-- Modal edit user -->
+          <div class="modal fade" id="edit-customerdetails-modal-{{user.id}}" tabindex="-1" aria-labelledby="edit-customerdetails-modal-{{user.id}}-label" aria-hidden="true">
+            <div class="modal-dialog">
+              <div class="modal-content">
+                <div class="modal-header">
+                  <h1 class="modal-title fs-5" id="edit-customerdetails-modal-{{user.id}}-label">Edit details </h1>
+                  <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <form id="edit-customerdetails-{{user.id}}" action="{{url_for('user_control.edit_user_details', user_id=user.id)}}" method="post" novalidate>
+                  <div class="modal-body">
+                    {{detailform.csrf_token}}
+                  <div class="mb-3">
+                      {{detailform.first_name.label}}
+                      {{detailform.first_name(id="edit-customerdetails-first_name-"+user.id|string, class="form-control")}}
+                      <div class="invalid-feedback">
+                        Please enter your first/given name
+                      </div>
+                    </div>
+                  <div class="mb-3">
+                      {{detailform.last_name.label}}
+                      {{detailform.last_name(id="edit-customerdetails-last_name-"++user.id|string, class="form-control")}}
+                      <div class="invalid-feedback">
+                        Please enter your last/surname
+                      </div>
+                    </div>
+                  <div class="mb-3">
+                      {{detailform.date_of_birth.label}}
+                      {{detailform.date_of_birth(id="edit-customerdetails-date-of-birth-"+user.id|string, class="form-control")}}
+                      <div class="invalid-feedback">
+                        You need to enter your date of birth
+                      </div>
+                    </div>
+                  <div class="mb-3 form-group input-group">
+                      {{detailform.phone_number.label(for="edit-customerdetails-phone_number-"+user.id|string, class="input-group-text")}}
+                      {{detailform.phone_number(id="edit-customerdetails-phone_number-"+user.id|string, style="height:2.4rem; width: 21rem;border: 0.1rem solid #ccc; border-radius: 0.3rem;")}}
+                      <div id="edit-details-invalid-number-{{user.id}}" class="invalid-feedback">
+                        Invalid phone number
+                      </div>
+                    </div>
+                  </div>
+                  <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                    {{detailform.submit(id="edit-customerdetails-submit-"+user.id|string, class="btn btn-primary")}}
+                  </div>
+                </form>
+                <script text="text/javascript">
+      
+                </script>
+              </div>
+            </div>
+          </div>
           <script type="text/javascript">
             $("#edit-role-{{user.id}}").submit(function(event){
               
@@ -72,6 +123,54 @@
                 location.reload()
               })
               event.preventDefault()
+            });
+
+            $("#edit-customerdetails-button-{{user.id}}").click((event)=>{
+                event.preventDefault();
+
+                $.get(
+                  "{{url_for('user_control.edit_user_details', user_id=user.id)}}",
+                  {},
+                  (data)=>{
+                    $(`#edit-customerdetails-first_name-${data.customerDetails.user_id}`).val(data.customerDetails.first_name);
+                    $(`#edit-customerdetails-last_name-${data.customerDetails.user_id}`).val(data.customerDetails.last_name);
+                    $(`#edit-customerdetails-date-of-birth-${data.customerDetails.user_id}`).val(data.customerDetails.dob);
+
+                    window.intlTelInput(document.getElementById(`edit-customerdetails-phone_number-${data.customerDetails.user_id}`), {
+                      separateDialCode: true,
+                      utilsScript: "https://cdn.jsdelivr.net/npm/intl-tel-input@18.2.1/build/js/utils.js",
+                    });
+
+                    window.intlTelInputGlobals.getInstance(document.getElementById(`edit-customerdetails-phone_number-${data.customerDetails.user_id}`)).setNumber(data.customerDetails.phone_number)
+
+                  }
+                )
+            })
+
+            $("#edit-customerdetails-{{user.id}}").submit(function(event){
+              event.preventDefault();
+              document.getElementById("edit-customerdetails-{{user.id}}").classList.add("was-validated")
+              if(document.getElementById("edit-customerdetails-{{user.id}}").checkValidity() && window.intlTelInputGlobals.getInstance(document.getElementById("edit-customerdetails-phone_number-{{user.id}}")).isValidNumber()){
+                $("#edit-details-invalid-number-{{user.id}}").hide()
+                $("#edit-customerdetails-phone_number-{{user.id}}").val(window.intlTelInputGlobals.getInstance(document.getElementById("edit-customerdetails-phone_number-{{user.id}}")).getNumber())
+
+                $.post(
+                  "{{url_for('user_control.edit_user_details', user_id=user.id)}}",
+                  $(this).serialize(),
+                  function(data){
+                    alert("User has been updated");
+                    location.reload();
+                  }
+                )
+              } else {
+                console.log("here")
+                if(document.getElementById("edit-customerdetails-{{user.id}}").classList.contains("was-validated")){
+                  $("#edit-details-invalid-number-{{user.id}}").show();
+                }else {
+                  $("#edit-details-invalid-number-{{user.id}}").hide();
+                }
+                event.stopPropagation();
+              }
             })
           </script>
         </td>
